@@ -21,6 +21,8 @@ O HeatTurbo é um aplicativo desktop para Windows que identifica o hardware, exp
 5. Extraia o `.zip` e execute **`HeatTurbo-Setup.exe`**.
 6. O instalador cria os atalhos. Abra o HeatTurbo e aceite a solicitação do Windows para executar como administrador.
 
+Se você desmarcar “Abrir HeatTurbo” no fim da instalação, também pode iniciá-lo normalmente pelo atalho; o Windows exibirá a confirmação de administrador nesse momento.
+
 > O instalador fica sempre no artifact **HeatTurbo-Installer**. O artifact **HeatTurbo-windows-x64** é a versão portátil para testes e desenvolvimento.
 
 O Windows pode mostrar um aviso do SmartScreen enquanto os binários não possuem assinatura digital. Confira se o arquivo veio desta página do repositório. Para distribuição comercial, o instalador deve ser assinado com um certificado de code signing.
