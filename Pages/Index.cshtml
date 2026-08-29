@@ -1,0 +1,197 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Heat Turbo";
+}
+
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand-wrap">
+            <div class="brand" aria-label="Heat Turbo logo">
+                <span class="brand-red">H</span><span class="brand-white">EAT</span>
+                <span class="brand-red brand-turbo">TURBO</span>
+            </div>
+        </div>
+
+        <nav class="menu">
+            <div class="nav-group">
+                <p class="nav-title">Geral</p>
+                <button class="nav-item inactive">
+                    <span class="icon">⌂</span>
+                    <span>Painel</span>
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Desempenho</p>
+                <button class="nav-item active">
+                    <span class="icon">⚡</span>
+                    <span>Otimizações</span>
+                </button>
+                <button class="nav-item">
+                    <span class="icon">⚙</span>
+                    <span>BIOS</span>
+                </button>
+                <button class="nav-item">
+                    <span class="icon">🧹</span>
+                    <span>Limpeza</span>
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Segurança</p>
+                <button class="nav-item">
+                    <span class="icon">🛡</span>
+                    <span>Backups</span>
+                </button>
+            </div>
+
+            <div class="nav-group">
+                <p class="nav-title">Ferramentas</p>
+                <button class="nav-item">
+                    <span class="icon">▣</span>
+                    <span>Apps do Windows</span>
+                </button>
+                <button class="nav-item">
+                    <span class="icon">⇩</span>
+                    <span>Apps Essenciais</span>
+                </button>
+                <button class="nav-item">
+                    <span class="icon">🖥</span>
+                    <span>Drivers</span>
+                </button>
+            </div>
+
+            <div class="nav-group account-group">
+                <p class="nav-title">Conta</p>
+                <button class="nav-item">
+                    <span class="icon">◌</span>
+                    <span>Autenticação</span>
+                </button>
+            </div>
+        </nav>
+    </aside>
+
+    <main class="content">
+        <header class="topbar">
+            <div class="topbar-spacer"></div>
+            <div class="header-icons">
+                <button class="icon-button">◔</button>
+                <button class="icon-button">◍</button>
+                <button class="flag-button" aria-label="Brasil">🇧🇷</button>
+                <button class="icon-button small">—</button>
+                <button class="icon-button small">□</button>
+                <button class="icon-button small close">×</button>
+            </div>
+        </header>
+
+        <section class="hero-card panel">
+            <div class="hero-left">
+                <div class="mini-badge orange">⚡</div>
+                <div class="hero-text">
+                    <h2>Otimize seu PC</h2>
+                    <p>Aplique os ajustes recomendados e ganhe FPS em segundos.</p>
+                </div>
+            </div>
+            <button class="primary-btn">Abrir Ajustes</button>
+        </section>
+
+        <section class="metrics-grid">
+            <article class="metric-card panel">
+                <div class="metric-header">
+                    <span class="metric-title">CPU</span>
+                    <span class="metric-score">7%</span>
+                </div>
+                <div class="spec-text">AMD Ryzen 7 9800X3D 8-Core</div>
+                <div class="sparkline spark-blue"></div>
+            </article>
+
+            <article class="metric-card panel">
+                <div class="metric-header">
+                    <span class="metric-title">GPU</span>
+                    <span class="metric-score green">2%</span>
+                </div>
+                <div class="spec-text">NVIDIA GeForce RTX 5070 Ti</div>
+                <div class="sparkline spark-green"></div>
+            </article>
+
+            <article class="metric-card panel">
+                <div class="metric-header">
+                    <span class="metric-title">RAM</span>
+                    <span class="metric-score purple">53%</span>
+                </div>
+                <div class="spec-text">DDR5 · 32 GB</div>
+                <div class="sparkline spark-purple"></div>
+            </article>
+
+            <article class="metric-card panel">
+                <div class="metric-header">
+                    <span class="metric-title">DISCO</span>
+                    <span class="metric-score">0%</span>
+                </div>
+                <div class="spec-text">SSD · 1TB</div>
+                <div class="sparkline spark-gray"></div>
+            </article>
+        </section>
+
+        <section class="bottom-grid">
+            <article class="mini-panel panel">
+                <div class="panel-header">
+                    <div class="mini-badge orange">◔</div>
+                    <h3>Status de otimização</h3>
+                </div>
+
+                <div class="status-row">
+                    <div class="ring ring-orange">
+                        <span>89%</span>
+                    </div>
+
+                    <div class="status-list">
+                        <div class="status-item">
+                            <span class="label">Ajustes disponíveis</span>
+                            <span class="count">28</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">Ajustes ativos</span>
+                            <span class="count green">25</span>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <article class="mini-panel panel">
+                <div class="panel-header">
+                    <div class="mini-badge orange">✦</div>
+                    <h3>Saúde do sistema</h3>
+                </div>
+
+                <div class="health-wrap">
+                    <div class="health-ring">
+                        <span>0%</span>
+                    </div>
+                    <p>Análise ainda não realizada</p>
+                    <button class="secondary-btn">Executar análise</button>
+                </div>
+            </article>
+        </section>
+
+        <section class="info-bar panel">
+            <div>
+                <span class="info-label">Sistema operacional</span>
+                <strong>Windows 11 Home</strong>
+            </div>
+            <div>
+                <span class="info-label">Versão</span>
+                <strong>25H2</strong>
+            </div>
+            <div>
+                <span class="info-label">Tempo ligado</span>
+                <strong>2h 8min</strong>
+            </div>
+            <div>
+                <span class="info-label">Modelo do disco</span>
+                <strong>MSI M470 Pro 2TB</strong>
+            </div>
+        </section>
+    </main>
+</div>
