@@ -6,7 +6,7 @@ namespace HeatTurbo.Services;
 
 public sealed record SystemSnapshot(
     string Cpu, string Gpu, string Ram, string Disk, string DiskModel,
-    string OperatingSystem, string Version, string Uptime, string ComputerName,
+    string OperatingSystem, string Version, string Uptime, long UptimeSeconds, string ComputerName,
     bool IsWindows, DateTimeOffset CapturedAt);
 
 public sealed class SystemInfoService
@@ -37,23 +37,23 @@ public sealed class SystemInfoService
     {
         const string script = """
             $cpu=(Get-CimInstance Win32_Processor | Select-Object -First 1 -ExpandProperty Name)
-            $gpu=(Get-CimInstance Win32_VideoController | Where-Object {$_.Name -notmatch 'Remote|Basic Display'} | Select-Object -First 1 -ExpandProperty Name)
+            $gpu=(Get-CimInstance Win32_VideoController | Where-Object {$_.Name -notmatch 'Remote|Basic Display'} | Sort-Object @{Expression={if($_.Name -match 'NVIDIA|GeForce|RTX'){0}elseif($_.Name -match 'Radeon RX|Radeon Pro|Intel Arc'){1}elseif($_.Name -match 'Radeon.*Graphics|Intel.*Graphics|UHD|Iris'){9}else{5}}} | Select-Object -First 1 -ExpandProperty Name)
             $ram=[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB,0)
             $disk=Get-CimInstance Win32_DiskDrive | Select-Object -First 1
             $os=Get-CimInstance Win32_OperatingSystem
-            [pscustomobject]@{cpu=$cpu;gpu=$gpu;ram=$ram;diskSize=[math]::Round($disk.Size/1GB,0);diskModel=$disk.Model;os=$os.Caption;version=$os.Version;boot=$os.LastBootUpTime} | ConvertTo-Json -Compress
+            [pscustomobject]@{cpu=$cpu;gpu=$gpu;ram=$ram;diskSize=[math]::Round($disk.Size/1GB,0);diskModel=$disk.Model;os=$os.Caption;version=$os.Version;uptimeSeconds=[int64]((Get-Date)-$os.LastBootUpTime).TotalSeconds} | ConvertTo-Json -Compress
             """;
 
         var json = await RunPowerShellAsync(script, ct);
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
-        var boot = root.TryGetProperty("boot", out var bootEl) && DateTimeOffset.TryParse(bootEl.GetString(), out var parsed)
-            ? parsed : DateTimeOffset.Now;
+        var uptimeSeconds = root.TryGetProperty("uptimeSeconds", out var uptimeEl) && uptimeEl.TryGetInt64(out var seconds)
+            ? Math.Max(0, seconds) : Environment.TickCount64 / 1000;
         return new(
             Text(root, "cpu", "CPU não identificada"), Text(root, "gpu", "GPU não identificada"),
             $"{Number(root, "ram")} GB", $"{Number(root, "diskSize")} GB", Text(root, "diskModel", "Disco não identificado"),
             Text(root, "os", "Windows"), Text(root, "version", Environment.OSVersion.Version.ToString()),
-            FormatUptime(DateTimeOffset.Now - boot), Environment.MachineName, true, DateTimeOffset.UtcNow);
+            FormatUptime(TimeSpan.FromSeconds(uptimeSeconds)), uptimeSeconds, Environment.MachineName, true, DateTimeOffset.UtcNow);
     }
 
     private static SystemSnapshot ReadPortable()
@@ -62,7 +62,7 @@ public sealed class SystemInfoService
         return new(RuntimeInformation.ProcessArchitecture.ToString(), "Disponível somente no Windows",
             $"{totalGb:0.#} GB disponível", "—", "Leitura completa no Windows",
             RuntimeInformation.OSDescription, Environment.OSVersion.Version.ToString(),
-            FormatUptime(TimeSpan.FromMilliseconds(Environment.TickCount64)), Environment.MachineName, false, DateTimeOffset.UtcNow);
+            FormatUptime(TimeSpan.FromMilliseconds(Environment.TickCount64)), Environment.TickCount64 / 1000, Environment.MachineName, false, DateTimeOffset.UtcNow);
     }
 
     private static string Text(JsonElement root, string name, string fallback) =>

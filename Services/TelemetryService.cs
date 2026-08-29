@@ -5,36 +5,34 @@ namespace HeatTurbo.Services;
 
 public sealed record TelemetrySnapshot(double Cpu, double Gpu, double Ram, double Disk, DateTimeOffset CapturedAt);
 
-public sealed class TelemetryService
+public sealed class TelemetryService : IDisposable
 {
-    private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly SemaphoreSlim _performanceGate = new(1, 1);
+    private readonly System.Threading.Timer _performanceTimer;
+    private readonly object _cpuLock = new();
     private ulong _previousIdle, _previousKernel, _previousUser;
-    private TelemetrySnapshot? _cached;
+    private double _gpu, _disk;
 
-    public TelemetryService() => ReadCpu();
-
-    public async Task<TelemetrySnapshot> ReadAsync(CancellationToken ct)
+    public TelemetryService()
     {
-        if (_cached is { } c && DateTimeOffset.UtcNow - c.CapturedAt < TimeSpan.FromMilliseconds(900)) return c;
-        await _gate.WaitAsync(ct);
-        try
-        {
-            var cpu = ReadCpu();
-            var ram = ReadRam();
-            var (gpu, disk) = await ReadPerformanceDataAsync(ct);
-            return _cached = new(cpu, gpu, ram, disk, DateTimeOffset.UtcNow);
-        }
-        finally { _gate.Release(); }
+        ReadCpu();
+        _performanceTimer = new System.Threading.Timer(async _ => await RefreshPerformanceAsync(), null, TimeSpan.Zero, TimeSpan.FromMilliseconds(850));
     }
+
+    public Task<TelemetrySnapshot> ReadAsync(CancellationToken ct) =>
+        Task.FromResult(new TelemetrySnapshot(ReadCpu(), Volatile.Read(ref _gpu), ReadRam(), Volatile.Read(ref _disk), DateTimeOffset.UtcNow));
 
     private double ReadCpu()
     {
-        if (!OperatingSystem.IsWindows() || !GetSystemTimes(out var idle, out var kernel, out var user)) return 0;
-        var i = ToUInt64(idle); var k = ToUInt64(kernel); var u = ToUInt64(user);
-        var total = k - _previousKernel + u - _previousUser;
-        var idleDelta = i - _previousIdle;
-        _previousIdle = i; _previousKernel = k; _previousUser = u;
-        return total == 0 ? 0 : Math.Clamp(Math.Round((total - idleDelta) * 100d / total, 1), 0, 100);
+        lock (_cpuLock)
+        {
+            if (!OperatingSystem.IsWindows() || !GetSystemTimes(out var idle, out var kernel, out var user)) return 0;
+            var i = ToUInt64(idle); var k = ToUInt64(kernel); var u = ToUInt64(user);
+            var total = k - _previousKernel + u - _previousUser;
+            var idleDelta = i - _previousIdle;
+            _previousIdle = i; _previousKernel = k; _previousUser = u;
+            return total == 0 ? 0 : Math.Clamp(Math.Round((total - idleDelta) * 100d / total, 1), 0, 100);
+        }
     }
 
     private static double ReadRam()
@@ -56,6 +54,13 @@ public sealed class TelemetryService
         catch { return (0, 0); }
     }
 
+    private async Task RefreshPerformanceAsync()
+    {
+        if (!await _performanceGate.WaitAsync(0)) return;
+        try { var values = await ReadPerformanceDataAsync(CancellationToken.None); Volatile.Write(ref _gpu, values.Gpu); Volatile.Write(ref _disk, values.Disk); }
+        finally { _performanceGate.Release(); }
+    }
+
     private static double Number(JsonElement e, string name) => e.TryGetProperty(name, out var v) && v.TryGetDouble(out var n) ? Math.Clamp(Math.Round(n,1),0,100) : 0;
     private static ulong ToUInt64(FileTime value) => ((ulong)value.High << 32) | value.Low;
 
@@ -63,4 +68,5 @@ public sealed class TelemetryService
     [StructLayout(LayoutKind.Sequential)] private struct MemoryStatus { public uint Length; public uint MemoryLoad; public ulong TotalPhys, AvailPhys, TotalPageFile, AvailPageFile, TotalVirtual, AvailVirtual, AvailExtendedVirtual; }
     [DllImport("kernel32.dll", SetLastError=true)] private static extern bool GetSystemTimes(out FileTime idle, out FileTime kernel, out FileTime user);
     [DllImport("kernel32.dll", SetLastError=true)] private static extern bool GlobalMemoryStatusEx(ref MemoryStatus status);
+    public void Dispose() { _performanceTimer.Dispose(); _performanceGate.Dispose(); }
 }
