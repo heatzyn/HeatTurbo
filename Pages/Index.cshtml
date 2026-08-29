@@ -9,6 +9,9 @@
     <nav>
       <button class="nav-item active" data-view="dashboard"><span>⌂</span>Painel</button>
       <button class="nav-item" data-view="optimizations"><span>⚡</span>Otimizações</button>
+      <button class="nav-item" data-view="bios"><span>⌘</span>BIOS</button>
+      <button class="nav-item" data-view="backups"><span>↶</span>Backups</button>
+      <button class="nav-item" data-view="drivers"><span>▣</span>Drivers</button>
       <button class="nav-item" data-view="system"><span>▣</span>Meu PC</button>
     </nav>
     <div class="sidebar-foot"><i></i><span>Engine local</span><small>Seus dados não saem do PC</small></div>
@@ -48,6 +51,26 @@
         <div><span>Tempo ligado</span><strong id="uptime">—</strong></div><div><span>Modelo do disco</span><strong id="disk-model">—</strong></div>
         <div><span>Nome do computador</span><strong id="machine-name">—</strong></div><div><span>Privacidade</span><strong class="safe">100% local</strong></div>
       </div>
+    </section>
+
+    <section class="view" id="bios">
+      <div class="section-head"><div><span class="eyebrow">ASSISTENTE SEGURO</span><h2>Otimização da BIOS</h2></div><button class="ghost" id="bios-scan-btn">Analisar hardware</button></div>
+      <div class="bios-hero"><div><span class="tag">SOMENTE LEITURA</span><h2>Perfil certo para<br>o seu hardware.</h2><p>O HeatTurbo identifica placa-mãe, BIOS e processador e monta um checklist. As mudanças continuam sob seu controle dentro da BIOS.</p></div><div class="chip-art">⌘</div></div>
+      <div class="notice warning"><span>!</span><p><strong>Proteção contra brick.</strong> O HeatTurbo não grava firmware e não altera voltagens automaticamente. Atualizações de BIOS devem vir do fabricante da placa-mãe.</p></div>
+      <div class="bios-summary" id="bios-summary"><div class="loading">Clique em “Analisar hardware”.</div></div>
+      <div class="recommendation-list" id="bios-recommendations"></div>
+    </section>
+
+    <section class="view" id="backups">
+      <div class="section-head"><div><span class="eyebrow">PROTEÇÃO DO WINDOWS</span><h2>Pontos de restauração</h2></div><button class="primary compact" id="backup-btn">Criar backup agora</button></div>
+      <div class="notice"><span>↶</span><p><strong>Backup antes de otimizar.</strong> O HeatTurbo cria automaticamente um ponto de restauração antes da primeira mudança de cada sessão.</p></div>
+      <div class="backup-list" id="backup-list"><div class="loading">Consultando o Windows...</div></div>
+    </section>
+
+    <section class="view" id="drivers">
+      <div class="section-head"><div><span class="eyebrow">FONTES OFICIAIS</span><h2>Drivers do seu PC</h2></div><button class="ghost" id="driver-scan-btn">Verificar drivers</button></div>
+      <div class="notice"><span>✓</span><p><strong>Sem instaladores desconhecidos.</strong> Detectamos versões instaladas e abrimos somente NVIDIA, AMD, Intel ou Windows Update.</p></div>
+      <div class="driver-list" id="driver-list"><div class="loading">Clique em “Verificar drivers”.</div></div>
     </section>
   </main>
 </div>

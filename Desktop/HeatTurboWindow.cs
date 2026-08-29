@@ -46,7 +46,12 @@ public sealed class HeatTurboWindow : Form
             _webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
             _webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
             _webView.CoreWebView2.Settings.IsZoomControlEnabled = false;
-            _webView.CoreWebView2.NewWindowRequested += (_, args) => args.Handled = true;
+            _webView.CoreWebView2.NewWindowRequested += (_, args) =>
+            {
+                args.Handled = true;
+                if (Uri.TryCreate(args.Uri, UriKind.Absolute, out var target) && IsAllowedExternalLink(target))
+                    System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(target.ToString()) { UseShellExecute = true });
+            };
             _webView.NavigationCompleted += (_, args) =>
             {
                 if (!args.IsSuccess) ShowStartupError($"Falha ao carregar a interface ({args.WebErrorStatus}).");
@@ -75,5 +80,15 @@ public sealed class HeatTurboWindow : Form
             Controls.Add(_loading);
             _loading.BringToFront();
         }
+    }
+
+    private static bool IsAllowedExternalLink(Uri uri)
+    {
+        if (uri.Scheme == "ms-settings") return true;
+        if (uri.Scheme != Uri.UriSchemeHttps) return false;
+        return uri.Host.EndsWith("nvidia.com", StringComparison.OrdinalIgnoreCase)
+            || uri.Host.EndsWith("amd.com", StringComparison.OrdinalIgnoreCase)
+            || uri.Host.EndsWith("intel.com", StringComparison.OrdinalIgnoreCase)
+            || uri.Host.EndsWith("microsoft.com", StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -1,0 +1,36 @@
+name: Relatar um problema
+description: Algo não funcionou no HeatTurbo
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Obrigado por ajudar a melhorar o HeatTurbo. Não envie senhas, chaves ou dados pessoais.
+  - type: input
+    id: windows
+    attributes:
+      label: Versão do Windows
+      placeholder: Windows 11 24H2
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: CPU e GPU
+      placeholder: Ryzen 7 5800X / RTX 4070
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: O que aconteceu?
+      description: Conte o que clicou, o resultado esperado e o resultado obtido.
+    validations:
+      required: true
+  - type: dropdown
+    id: backup
+    attributes:
+      label: O ponto de restauração foi criado?
+      options: [Sim, Não, Não sei]
+    validations:
+      required: true

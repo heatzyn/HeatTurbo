@@ -7,6 +7,8 @@ public sealed record ActionResult(bool Success, string Message, string? Id = nul
 
 public sealed class OptimizationService
 {
+    private readonly RestorePointService _restorePoints;
+    public OptimizationService(RestorePointService restorePoints) => _restorePoints = restorePoints;
     private sealed record Definition(string Id, string Name, string Description, string Category, bool Restart, string Test, string Apply, string Restore);
 
     private static readonly Definition[] Definitions =
@@ -43,7 +45,12 @@ public sealed class OptimizationService
         return result;
     }
 
-    public Task<ActionResult> ApplyAsync(string id, CancellationToken ct) => ExecuteAsync(id, true, ct);
+    public async Task<ActionResult> ApplyAsync(string id, CancellationToken ct)
+    {
+        var backup = await _restorePoints.EnsureBeforeChangeAsync(ct);
+        if (!backup.Success) return backup with { Id = id };
+        return await ExecuteAsync(id, true, ct);
+    }
     public Task<ActionResult> RestoreAsync(string id, CancellationToken ct) => ExecuteAsync(id, false, ct);
 
     private static async Task<ActionResult> ExecuteAsync(string id, bool apply, CancellationToken ct)

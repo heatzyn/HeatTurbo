@@ -16,6 +16,9 @@ internal static class Program
         builder.Services.AddRazorPages();
         builder.Services.AddSingleton<SystemInfoService>();
         builder.Services.AddSingleton<OptimizationService>();
+        builder.Services.AddSingleton<RestorePointService>();
+        builder.Services.AddSingleton<BiosService>();
+        builder.Services.AddSingleton<DriverService>();
 
         using var app = builder.Build();
         if (!app.Environment.IsDevelopment()) app.UseExceptionHandler("/Error");
@@ -65,5 +68,14 @@ internal static class Program
             var result = await service.RestoreAsync(id, ct);
             return result.Success ? (IResult)Results.Ok(result) : Results.BadRequest(result);
         });
+
+        app.MapGet("/api/backups", async (RestorePointService service, CancellationToken ct) => Results.Ok(await service.GetAllAsync(ct)));
+        app.MapPost("/api/backups", async (RestorePointService service, CancellationToken ct) =>
+        {
+            var result = await service.CreateAsync("HeatTurbo - backup manual", ct);
+            return result.Success ? (IResult)Results.Ok(result) : Results.BadRequest(result);
+        });
+        app.MapGet("/api/bios", async (BiosService service, CancellationToken ct) => Results.Ok(await service.AnalyzeAsync(ct)));
+        app.MapGet("/api/drivers", async (DriverService service, CancellationToken ct) => Results.Ok(await service.ScanAsync(ct)));
     }
 }
