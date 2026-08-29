@@ -31,10 +31,10 @@
 
       <div class="section-head"><div><span class="eyebrow">TELEMETRIA LOCAL</span><h2>Hardware detectado</h2></div><span class="updated" id="updated-at">Aguardando leitura</span></div>
       <section class="hardware-grid">
-        <article class="hardware-card"><div class="card-icon">CPU</div><span>PROCESSADOR</span><strong id="cpu-name">Lendo...</strong><div class="bar"><i></i></div></article>
-        <article class="hardware-card"><div class="card-icon red">GPU</div><span>PLACA DE VÍDEO</span><strong id="gpu-name">Lendo...</strong><div class="bar"><i></i></div></article>
-        <article class="hardware-card"><div class="card-icon">RAM</div><span>MEMÓRIA</span><strong id="ram-name">Lendo...</strong><div class="bar"><i></i></div></article>
-        <article class="hardware-card"><div class="card-icon">SSD</div><span>ARMAZENAMENTO</span><strong id="disk-name">Lendo...</strong><div class="bar"><i></i></div></article>
+        <article class="hardware-card"><div class="metric-top"><div class="card-icon">CPU</div><b id="cpu-usage">0%</b></div><span>PROCESSADOR</span><strong id="cpu-name">Lendo...</strong><canvas class="mini-chart" id="cpu-chart"></canvas><div class="bar"><i id="cpu-bar"></i></div></article>
+        <article class="hardware-card"><div class="metric-top"><div class="card-icon red">GPU</div><b id="gpu-usage">0%</b></div><span>PLACA DE VÍDEO</span><strong id="gpu-name">Lendo...</strong><canvas class="mini-chart green" id="gpu-chart"></canvas><div class="bar"><i id="gpu-bar"></i></div></article>
+        <article class="hardware-card"><div class="metric-top"><div class="card-icon">RAM</div><b id="ram-usage">0%</b></div><span>MEMÓRIA</span><strong id="ram-name">Lendo...</strong><canvas class="mini-chart purple" id="ram-chart"></canvas><div class="bar"><i id="ram-bar"></i></div></article>
+        <article class="hardware-card"><div class="metric-top"><div class="card-icon">SSD</div><b id="disk-usage">0%</b></div><span>ARMAZENAMENTO</span><strong id="disk-name">Lendo...</strong><canvas class="mini-chart amber" id="disk-chart"></canvas><div class="bar"><i id="disk-bar"></i></div></article>
       </section>
     </section>
 

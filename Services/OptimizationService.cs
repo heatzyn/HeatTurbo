@@ -28,7 +28,23 @@ public sealed class OptimizationService
         new("high-performance", "Plano de energia de alto desempenho", "Reduz economia agressiva de energia durante a partida.", "Performance", false,
             "$s=(powercfg /getactivescheme); if($s -match '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c'){'true'}else{'false'}",
             "powercfg /setactive 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c",
-            "powercfg /setactive 381b4222-f694-41f0-9685-ff5bb260df2e")
+            "powercfg /setactive 381b4222-f694-41f0-9685-ff5bb260df2e"),
+        new("hags", "Agendamento de GPU por hardware (HAGS)", "Permite testar o scheduler de GPU do Windows em drivers WDDM modernos.", "Gaming", true,
+            "$v=(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers' -Name HwSchMode -ErrorAction SilentlyContinue).HwSchMode;if($v -eq 2){'true'}else{'false'}",
+            "Set-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers' -Name HwSchMode -Type DWord -Value 2",
+            "Remove-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\GraphicsDrivers' -Name HwSchMode -ErrorAction SilentlyContinue"),
+        new("background-apps", "Limitar apps da Store em segundo plano", "Reduz atividade de aplicativos UWP que você não está usando durante o jogo.", "Performance", false,
+            "$v=(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications' -Name GlobalUserDisabled -ErrorAction SilentlyContinue).GlobalUserDisabled;if($v -eq 1){'true'}else{'false'}",
+            "New-Item -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications' -Force|Out-Null;Set-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications' -Name GlobalUserDisabled -Type DWord -Value 1",
+            "Remove-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\BackgroundAccessApplications' -Name GlobalUserDisabled -ErrorAction SilentlyContinue"),
+        new("visual-effects", "Priorizar desempenho visual do Windows", "Reduz animações e efeitos da interface para liberar recursos do desktop.", "Performance", false,
+            "$v=(Get-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects' -Name VisualFXSetting -ErrorAction SilentlyContinue).VisualFXSetting;if($v -eq 2){'true'}else{'false'}",
+            "New-Item -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects' -Force|Out-Null;Set-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects' -Name VisualFXSetting -Type DWord -Value 2",
+            "Remove-ItemProperty -Path 'HKCU:\\Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\VisualEffects' -Name VisualFXSetting -ErrorAction SilentlyContinue"),
+        new("power-throttling", "Desativar Power Throttling", "Evita que o Windows coloque processos relacionados ao jogo em modo de economia.", "Latência", true,
+            "$v=(Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling' -Name PowerThrottlingOff -ErrorAction SilentlyContinue).PowerThrottlingOff;if($v -eq 1){'true'}else{'false'}",
+            "New-Item -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling' -Force|Out-Null;Set-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling' -Name PowerThrottlingOff -Type DWord -Value 1",
+            "Remove-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Power\\PowerThrottling' -Name PowerThrottlingOff -ErrorAction SilentlyContinue")
     ];
 
     public async Task<IReadOnlyList<OptimizationItem>> GetAllAsync(CancellationToken ct)

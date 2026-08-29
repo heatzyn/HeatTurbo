@@ -1,5 +1,5 @@
 #define MyAppName "HeatTurbo"
-#define MyAppVersion "0.1.1"
+#define MyAppVersion "0.2.0"
 #define MyAppPublisher "HeatTurbo"
 #define MyAppExeName "HeatTurbo.exe"
 

@@ -19,6 +19,7 @@ internal static class Program
         builder.Services.AddSingleton<RestorePointService>();
         builder.Services.AddSingleton<BiosService>();
         builder.Services.AddSingleton<DriverService>();
+        builder.Services.AddSingleton<TelemetryService>();
 
         using var app = builder.Build();
         if (!app.Environment.IsDevelopment()) app.UseExceptionHandler("/Error");
@@ -77,5 +78,6 @@ internal static class Program
         });
         app.MapGet("/api/bios", async (BiosService service, CancellationToken ct) => Results.Ok(await service.AnalyzeAsync(ct)));
         app.MapGet("/api/drivers", async (DriverService service, CancellationToken ct) => Results.Ok(await service.ScanAsync(ct)));
+        app.MapGet("/api/telemetry", async (TelemetryService service, CancellationToken ct) => Results.Ok(await service.ReadAsync(ct)));
     }
 }

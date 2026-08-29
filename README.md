@@ -31,6 +31,7 @@ O Windows pode mostrar um aviso do SmartScreen enquanto os binários não possue
 
 - Aplicativo em janela própria; nenhum navegador precisa ser aberto.
 - Leitura local de CPU, GPU, RAM, disco, placa-mãe, BIOS e Windows.
+- Telemetria animada de uso de CPU, GPU 3D, RAM e disco atualizada durante o uso.
 - Ajustes reversíveis de Modo de Jogo, Game DVR, mouse e plano de energia.
 - Ponto de restauração automático antes da primeira mudança de cada sessão.
 - Criação e consulta de pontos de restauração pela aba **Backups**.
