@@ -33,10 +33,13 @@ O Windows pode mostrar um aviso do SmartScreen enquanto os binários não possue
 - Leitura local de CPU, GPU, RAM, disco, placa-mãe, BIOS e Windows.
 - Telemetria animada de uso de CPU, GPU 3D, RAM e disco atualizada durante o uso.
 - Ajustes reversíveis de Modo de Jogo, Game DVR, mouse e plano de energia.
+- Catálogo com 20 ajustes aplicáveis e reversíveis, separados por desempenho, jogos, latência, rede e interface.
 - Ponto de restauração automático antes da primeira mudança de cada sessão.
 - Criação e consulta de pontos de restauração pela aba **Backups**.
 - Assistente de BIOS que detecta o hardware e gera recomendações sem gravar firmware.
 - Inventário de drivers de vídeo e chipset com links somente para NVIDIA, AMD, Intel e Windows Update.
+- Instalação interna de drivers assinados oferecidos pelo Windows Update, com backup prévio.
+- Inicialização opcional com o Windows e limpeza automática de temporários antigos.
 - Build e instalador automáticos no GitHub Actions.
 
 ## 🧭 Primeira utilização

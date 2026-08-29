@@ -12,6 +12,7 @@
       <button class="nav-item" data-view="bios"><span>⌘</span>BIOS</button>
       <button class="nav-item" data-view="backups"><span>↶</span>Backups</button>
       <button class="nav-item" data-view="drivers"><span>▣</span>Drivers</button>
+      <button class="nav-item" data-view="tools"><span>✦</span>Automação</button>
       <button class="nav-item" data-view="system"><span>▣</span>Meu PC</button>
     </nav>
     <div class="sidebar-foot"><i></i><span>Engine local</span><small>Seus dados não saem do PC</small></div>
@@ -68,9 +69,18 @@
     </section>
 
     <section class="view" id="drivers">
-      <div class="section-head"><div><span class="eyebrow">FONTES OFICIAIS</span><h2>Drivers do seu PC</h2></div><button class="ghost" id="driver-scan-btn">Verificar drivers</button></div>
+      <div class="section-head"><div><span class="eyebrow">WINDOWS UPDATE</span><h2>Drivers do seu PC</h2></div><div class="button-row"><button class="ghost" id="driver-scan-btn">Verificar drivers</button><button class="primary compact" id="driver-install-btn">Instalar atualizações</button></div></div>
       <div class="notice"><span>✓</span><p><strong>Sem instaladores desconhecidos.</strong> Detectamos versões instaladas e abrimos somente NVIDIA, AMD, Intel ou Windows Update.</p></div>
       <div class="driver-list" id="driver-list"><div class="loading">Clique em “Verificar drivers”.</div></div>
+    </section>
+
+    <section class="view" id="tools">
+      <div class="section-head"><div><span class="eyebrow">AUTOMAÇÃO LOCAL</span><h2>Rotinas do HeatTurbo</h2></div></div>
+      <div class="automation-grid">
+        <article class="automation-card"><div><span>INICIALIZAÇÃO</span><h3>Abrir com o Windows</h3><p>Inicia o painel quando você entrar na sua conta.</p></div><button class="toggle" id="startup-toggle"><i></i></button></article>
+        <article class="automation-card"><div><span>MANUTENÇÃO</span><h3>Limpeza automática</h3><p>Remove somente temporários com mais de 48 horas, a cada 6 horas enquanto o app estiver aberto.</p></div><button class="toggle" id="clean-toggle"><i></i></button></article>
+        <article class="automation-card wide"><div><span>LIMPEZA MANUAL</span><h3>Arquivos temporários seguros</h3><p id="clean-status">Nenhuma limpeza executada nesta sessão.</p></div><button class="ghost" id="clean-now-btn">Limpar agora</button></article>
+      </div>
     </section>
   </main>
 </div>
