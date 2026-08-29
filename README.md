@@ -1,6 +1,6 @@
 # HeatTurbo
 
-Otimizador local para Windows focado em CS2, construído em C# e .NET 8.
+Aplicativo desktop para Windows focado em otimização de CS2, construído em C#, .NET 8 e WebView2.
 
 ## O que já funciona
 
@@ -8,6 +8,7 @@ Otimizador local para Windows focado em CS2, construído em C# e .NET 8.
 - Analisa o estado do PC sem alterar configurações.
 - Ativa e restaura individualmente Modo de Jogo, Game DVR, aceleração do mouse e plano de energia.
 - Interface responsiva preta e vermelha; nenhuma informação do hardware é enviada para servidores.
+- Abre em uma janela desktop própria; o navegador e um endereço localhost não ficam visíveis para o usuário.
 - Continua abrindo em modo de prévia fora do Windows, sem tentar executar ajustes incompatíveis.
 
 ## Executar para desenvolvimento
@@ -29,7 +30,9 @@ No PowerShell, dentro da pasta do projeto:
 .\build-windows.ps1
 ```
 
-O executável e seus arquivos serão criados em `release\win-x64`. Para distribuir comercialmente, empacote essa pasta com MSIX ou Inno Setup e assine digitalmente o instalador.
+O aplicativo portátil será criado em `release\win-x64`. Se o Inno Setup estiver instalado, o script também gera `release\installer\HeatTurbo-Setup.exe`, com atalhos, entrada para desinstalação e opção de abrir o app ao terminar.
+
+O Windows 10/11 normalmente já possui o Microsoft Edge WebView2 Runtime. Se ele não estiver presente, o HeatTurbo mostrará uma instrução clara ao iniciar. Antes da distribuição comercial, assine digitalmente o executável e o instalador para reduzir alertas do Windows SmartScreen.
 
 ## Segurança
 
