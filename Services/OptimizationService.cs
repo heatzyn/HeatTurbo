@@ -117,6 +117,22 @@ public sealed class OptimizationService
     }
     public Task<ActionResult> RestoreAsync(string id, CancellationToken ct) => ExecuteAsync(id, false, ct);
 
+    public async Task<ActionResult> ApplyCs2ProfileAsync(CancellationToken ct)
+    {
+        string[] profile = ["game-mode", "game-dvr", "xbox-overlay", "mouse-acceleration", "high-performance", "background-apps", "games-task"];
+        var backup = await _restorePoints.EnsureBeforeChangeAsync(ct);
+        if (!backup.Success) return backup;
+        var applied = 0; var failures = new List<string>();
+        foreach (var id in profile)
+        {
+            var result = await ExecuteAsync(id, true, ct);
+            if (result.Success) applied++; else failures.Add(id);
+        }
+        return failures.Count == 0
+            ? new(true, $"Perfil CS2 aplicado: {applied} ajustes. Reinicie o Windows antes de medir.")
+            : new(false, $"{applied} ajustes aplicados; falharam: {string.Join(", ", failures)}.");
+    }
+
     private static async Task<ActionResult> ExecuteAsync(string id, bool apply, CancellationToken ct)
     {
         var item = Definitions.FirstOrDefault(x => x.Id == id);

@@ -70,6 +70,11 @@ internal static class Program
             var result = await service.RestoreAsync(id, ct);
             return result.Success ? (IResult)Results.Ok(result) : Results.BadRequest(result);
         });
+        app.MapPost("/api/profiles/cs2/apply", async (OptimizationService service, CancellationToken ct) =>
+        {
+            var result = await service.ApplyCs2ProfileAsync(ct);
+            return result.Success ? (IResult)Results.Ok(result) : Results.BadRequest(result);
+        });
 
         app.MapGet("/api/backups", async (RestorePointService service, CancellationToken ct) => Results.Ok(await service.GetAllAsync(ct)));
         app.MapPost("/api/backups", async (RestorePointService service, CancellationToken ct) =>

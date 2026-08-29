@@ -24,6 +24,7 @@ public sealed class HeatTurboWindow : Form
     {
         _appAddress = appAddress;
         Text = "HeatTurbo";
+        if (!string.IsNullOrWhiteSpace(Environment.ProcessPath)) Icon = Icon.ExtractAssociatedIcon(Environment.ProcessPath);
         StartPosition = FormStartPosition.CenterScreen;
         MinimumSize = new Size(1024, 680);
         Size = new Size(1400, 900);

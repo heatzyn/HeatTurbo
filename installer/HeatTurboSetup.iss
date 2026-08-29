@@ -1,5 +1,5 @@
 #define MyAppName "HeatTurbo"
-#define MyAppVersion "0.3.1"
+#define MyAppVersion "0.4.0"
 #define MyAppPublisher "HeatTurbo"
 #define MyAppExeName "HeatTurbo.exe"
 
@@ -21,6 +21,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=lowest
 SetupLogging=yes
 UninstallDisplayIcon={app}\{#MyAppExeName}
+SetupIconFile=..\Assets\HeatTurbo.ico
 
 [Languages]
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
