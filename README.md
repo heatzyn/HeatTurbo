@@ -12,7 +12,7 @@
 
 O HeatTurbo é um aplicativo desktop para Windows que identifica o hardware, explica cada ajuste e cria proteção antes de mudar o sistema. O projeto ainda está em fase de testes: use em uma máquina de teste ou revise cada opção antes de aplicar.
 
-## 📥 Como baixar e instalar
+## Como baixar e instalar
 
 1. Abra a página **[Actions → Build Windows app](https://github.com/heatzyn/HeatTurbo/actions/workflows/windows-build.yml)**.
 2. Entre na execução mais recente que tenha um ✅ verde.
@@ -27,7 +27,7 @@ Se você desmarcar “Abrir HeatTurbo” no fim da instalação, também pode in
 
 O Windows pode mostrar um aviso do SmartScreen enquanto os binários não possuem assinatura digital. Confira se o arquivo veio desta página do repositório. Para distribuição comercial, o instalador deve ser assinado com um certificado de code signing.
 
-## ✅ O que já funciona
+## O que já funciona
 
 - Aplicativo em janela própria; nenhum navegador precisa ser aberto.
 - Leitura local de CPU, GPU, RAM, disco, placa-mãe, BIOS e Windows.
