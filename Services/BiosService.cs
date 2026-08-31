@@ -12,8 +12,9 @@ public sealed class BiosService
     {
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             return new("Disponível no Windows", "—", "—", "—", "—", "—", "—", "—", []);
-        const string script = "$b=Get-CimInstance Win32_BIOS;$m=Get-CimInstance Win32_BaseBoard;$c=Get-CimInstance Win32_ComputerSystem;$p=Get-CimInstance Win32_Processor|Select-Object -First 1;$g=Get-CimInstance Win32_VideoController|Where-Object {$_.Name -notmatch 'Basic|Remote'}|Select-Object -First 1;$f=(Get-ComputerInfo -Property BiosFirmwareType).BiosFirmwareType;[pscustomobject]@{manufacturer=$c.Manufacturer;board=($m.Manufacturer+' '+$m.Product);vendor=$b.Manufacturer;version=$b.SMBIOSBIOSVersion;date=$b.ReleaseDate;cpu=$p.Name;gpu=$g.Name;firmware=$f}|ConvertTo-Json -Compress";
-        using var doc = JsonDocument.Parse(await SystemInfoService.RunPowerShellAsync(script, ct));
+        const string script = "$b=Get-CimInstance Win32_BIOS|Select-Object -First 1;$m=Get-CimInstance Win32_BaseBoard|Select-Object -First 1;$c=Get-CimInstance Win32_ComputerSystem;$p=Get-CimInstance Win32_Processor|Select-Object -First 1;$g=Get-CimInstance Win32_VideoController|Where-Object {$_.Name -notmatch 'Basic|Remote'}|Sort-Object @{Expression={if($_.Name-match'NVIDIA|GeForce|RTX'){0}elseif($_.Name-match'Radeon RX|Radeon Pro|Intel Arc'){1}elseif($_.Name-match'Radeon.*Graphics|Intel.*Graphics|UHD|Iris'){9}else{5}}}|Select-Object -First 1;$f=(Get-ComputerInfo -Property BiosFirmwareType).BiosFirmwareType;[pscustomobject]@{manufacturer=$c.Manufacturer;board=($m.Manufacturer+' '+$m.Product);vendor=$b.Manufacturer;version=$b.SMBIOSBIOSVersion;date=$b.ReleaseDate;cpu=$p.Name;gpu=$g.Name;firmware=$f}|ConvertTo-Json -Compress";
+        using var doc = JsonDocument.Parse(await SystemInfoService.RunPowerShellAsync(
+            script, ct, TimeSpan.FromSeconds(45)));
         var r = doc.RootElement;
         var cpu = Text(r, "cpu");
         var gpu = Text(r,"gpu"); var board = Text(r,"board"); var firmware = Text(r,"firmware");

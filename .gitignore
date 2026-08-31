@@ -1,0 +1,17 @@
+# .NET / Visual Studio build output
+bin/
+obj/
+release/
+.vs/
+*.user
+*.suo
+
+# Local logs and generated installer files
+*.log
+*.tmp
+*.userosscache
+*.sln.docstates
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db

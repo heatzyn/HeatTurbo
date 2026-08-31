@@ -26,7 +26,7 @@
 
     <section class="view active" id="dashboard">
       <article class="hero">
-        <div class="hero-copy"><span class="tag">PERFIL COMPETITIVO · CS2</span><h2>Seu PC.<br><em>Sem freio.</em></h2><p>Detecte gargalos e aplique somente ajustes seguros, transparentes e reversíveis.</p><div class="hero-actions"><button class="primary" id="analyze-btn">Analisar agora <span>→</span></button><button class="ghost" id="cs2-profile-btn">Aplicar perfil CS2</button></div></div>
+        <div class="hero-copy"><span class="tag">MODO COMPETITIVO · CS2</span><h2>Seu PC.<br><em>Sem freio.</em></h2><p>Detecte gargalos e aplique somente ajustes seguros, transparentes e reversíveis.</p><div class="hero-actions"><button class="primary" id="analyze-btn">Analisar agora <span>→</span></button><button class="ghost" id="cs2-profile-btn">Aplicar modo CS2</button></div></div>
         <div class="gauge"><div class="gauge-ring" id="score-ring"><div><strong id="health-score">--</strong><span>HEALTH SCORE</span></div></div><p id="score-message">Faça a primeira análise</p></div>
       </article>
 
@@ -42,6 +42,8 @@
     <section class="view" id="optimizations">
       <div class="section-head"><div><span class="eyebrow">CATÁLOGO SEGURO</span><h2>Ajustes para CS2</h2></div><div class="status-pill"><b id="active-count">0</b> ativos</div></div>
       <div class="notice"><span>↶</span><p><strong>Reversível por padrão.</strong> Cada item mostra exatamente o que muda e pode ser restaurado individualmente.</p></div>
+      <div class="profile-grid" id="profile-list"><div class="loading">Carregando modos de otimização...</div></div>
+      <div class="optimization-toolbar"><div><span>CONTROLE TOTAL</span><p>Volte todos os ajustes aplicados pelo HeatTurbo ao estado original salvo neste PC.</p></div><button class="ghost danger-action" id="restore-all-btn">Restaurar todos</button></div>
       <div class="optimization-list" id="optimization-list"><div class="loading">Carregando ajustes...</div></div>
     </section>
 
@@ -65,13 +67,18 @@
     <section class="view" id="backups">
       <div class="section-head"><div><span class="eyebrow">PROTEÇÃO DO WINDOWS</span><h2>Pontos de restauração</h2></div><button class="primary compact" id="backup-btn">Criar backup agora</button></div>
       <div class="notice"><span>↶</span><p><strong>Backup antes de otimizar.</strong> O HeatTurbo cria automaticamente um ponto de restauração antes da primeira mudança de cada sessão.</p></div>
+      <div class="backup-state" id="backup-status" role="status">Verificando a Proteção do Sistema...</div>
+      <div class="notice warning"><span>!</span><p><strong>Restaurar reinicia o PC.</strong> Aplicativos, drivers e configurações posteriores ao ponto escolhido podem ser desfeitos. Seus arquivos pessoais não são um backup do ponto de restauração.</p></div>
       <div class="backup-list" id="backup-list"><div class="loading">Consultando o Windows...</div></div>
     </section>
 
     <section class="view" id="drivers">
-      <div class="section-head"><div><span class="eyebrow">WINDOWS UPDATE</span><h2>Drivers do seu PC</h2></div><div class="button-row"><button class="ghost" id="driver-scan-btn">Verificar drivers</button><button class="primary compact" id="driver-install-btn">Instalar atualizações</button></div></div>
-      <div class="notice"><span>✓</span><p><strong>Sem instaladores desconhecidos.</strong> Detectamos versões instaladas e abrimos somente NVIDIA, AMD, Intel ou Windows Update.</p></div>
-      <div class="driver-list" id="driver-list"><div class="loading">Clique em “Verificar drivers”.</div></div>
+      <div class="section-head"><div><span class="eyebrow">CATÁLOGO OFICIAL ASSINADO</span><h2>Drivers do seu PC</h2></div><div class="button-row"><button class="ghost" id="driver-scan-btn">Verificar drivers</button><button class="primary compact" id="driver-install-btn" disabled>Baixar e instalar</button></div></div>
+      <div class="notice"><span>✓</span><p><strong>Compatibilidade pelo hardware ID.</strong> O próprio Windows Update seleciona pacotes assinados enviados pela Microsoft e pelos fabricantes. Firmware e BIOS nunca entram nesta instalação.</p></div>
+      <div class="driver-state" id="driver-status" role="status">Clique em “Verificar drivers” para consultar o hardware e o catálogo oficial.</div>
+      <section class="driver-section"><div class="driver-section-head"><span>ATUALIZAÇÕES APLICÁVEIS</span><b id="driver-update-count">0</b></div><div class="driver-list" id="driver-updates"><div class="empty-state">Nenhuma consulta realizada.</div></div></section>
+      <section class="driver-section"><div class="driver-section-head"><span>DRIVERS INSTALADOS</span><b id="driver-device-count">0</b></div><div class="driver-list" id="driver-list"><div class="loading">Aguardando leitura do hardware...</div></div></section>
+      <section class="driver-section driver-results" id="driver-result-section" hidden><div class="driver-section-head"><span>RESULTADO DA INSTALAÇÃO</span><b id="driver-result-count">0</b></div><div class="driver-list" id="driver-results"></div></section>
     </section>
 
     <section class="view" id="tools">

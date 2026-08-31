@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.Json;
 
 namespace HeatTurbo.Services;
@@ -41,14 +42,14 @@ public sealed class SystemInfoService
             $ram=[math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory/1GB,0)
             $disk=Get-CimInstance Win32_DiskDrive | Select-Object -First 1
             $os=Get-CimInstance Win32_OperatingSystem
-            [pscustomobject]@{cpu=$cpu;gpu=$gpu;ram=$ram;diskSize=[math]::Round($disk.Size/1GB,0);diskModel=$disk.Model;os=$os.Caption;version=$os.Version;uptimeSeconds=[int64]((Get-Date)-$os.LastBootUpTime).TotalSeconds} | ConvertTo-Json -Compress
+            [pscustomobject]@{cpu=$cpu;gpu=$gpu;ram=$ram;diskSize=[math]::Round($disk.Size/1GB,0);diskModel=$disk.Model;os=$os.Caption;version=$os.Version} | ConvertTo-Json -Compress
             """;
 
-        var json = await RunPowerShellAsync(script, ct);
+        var json = await RunPowerShellAsync(script, ct, TimeSpan.FromSeconds(45));
         using var doc = JsonDocument.Parse(json);
         var root = doc.RootElement;
-        var uptimeSeconds = root.TryGetProperty("uptimeSeconds", out var uptimeEl) && uptimeEl.TryGetInt64(out var seconds)
-            ? Math.Max(0, seconds) : Environment.TickCount64 / 1000;
+        // TickCount64 reports the kernel uptime directly and is not affected by clock/time-zone changes.
+        var uptimeSeconds = Math.Max(0, Environment.TickCount64 / 1000);
         return new(
             Text(root, "cpu", "CPU não identificada"), Text(root, "gpu", "GPU não identificada"),
             $"{Number(root, "ram")} GB", $"{Number(root, "diskSize")} GB", Text(root, "diskModel", "Disco não identificado"),
@@ -71,21 +72,63 @@ public sealed class SystemInfoService
     private static string FormatUptime(TimeSpan value) => value.TotalDays >= 1
         ? $"{(int)value.TotalDays}d {value.Hours}h" : $"{(int)value.TotalHours}h {value.Minutes}min";
 
-    internal static async Task<string> RunPowerShellAsync(string script, CancellationToken ct)
+    internal static async Task<string> RunPowerShellAsync(
+        string script,
+        CancellationToken ct,
+        TimeSpan? timeout = null)
     {
+        var effectiveTimeout = timeout ?? TimeSpan.FromMinutes(2);
+        using var timeoutSource = new CancellationTokenSource(effectiveTimeout);
+        using var linkedSource = CancellationTokenSource.CreateLinkedTokenSource(ct, timeoutSource.Token);
+        var operationToken = linkedSource.Token;
+
+        void ThrowMappedCancellation()
+        {
+            if (!operationToken.IsCancellationRequested) return;
+            if (timeoutSource.IsCancellationRequested && !ct.IsCancellationRequested)
+                throw new TimeoutException($"O PowerShell ultrapassou o limite de {effectiveTimeout.TotalMinutes:0.#} minuto(s).");
+            ct.ThrowIfCancellationRequested();
+            throw new OperationCanceledException(operationToken);
+        }
+
         var start = new ProcessStartInfo("powershell.exe")
         {
             UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,
-            CreateNoWindow = true
+            CreateNoWindow = true,
+            StandardOutputEncoding = Encoding.UTF8,
+            StandardErrorEncoding = Encoding.UTF8
         };
         start.ArgumentList.Add("-NoProfile");
         start.ArgumentList.Add("-NonInteractive");
         start.ArgumentList.Add("-ExecutionPolicy"); start.ArgumentList.Add("Bypass");
-        start.ArgumentList.Add("-Command"); start.ArgumentList.Add(script);
+        start.ArgumentList.Add("-Command");
+        start.ArgumentList.Add("$ErrorActionPreference='Stop';$ProgressPreference='SilentlyContinue';[Console]::OutputEncoding=[Text.UTF8Encoding]::new($false);" + script);
         using var process = Process.Start(start) ?? throw new InvalidOperationException("Não foi possível iniciar o PowerShell.");
-        var output = await process.StandardOutput.ReadToEndAsync(ct);
-        var error = await process.StandardError.ReadToEndAsync(ct);
-        await process.WaitForExitAsync(ct);
+        using var cancellationRegistration = operationToken.Register(() =>
+        {
+            try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch { }
+        });
+        var outputTask = process.StandardOutput.ReadToEndAsync(operationToken);
+        var errorTask = process.StandardError.ReadToEndAsync(operationToken);
+        try
+        {
+            await Task.WhenAll(outputTask, errorTask, process.WaitForExitAsync(operationToken));
+        }
+        catch (OperationCanceledException)
+        {
+            try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch { }
+            ThrowMappedCancellation();
+            throw;
+        }
+        catch (Exception) when (operationToken.IsCancellationRequested)
+        {
+            try { if (!process.HasExited) process.Kill(entireProcessTree: true); } catch { }
+            ThrowMappedCancellation();
+            throw;
+        }
+        ThrowMappedCancellation();
+        var output = await outputTask;
+        var error = await errorTask;
         if (process.ExitCode != 0) throw new InvalidOperationException(string.IsNullOrWhiteSpace(error) ? "Falha no PowerShell." : error.Trim());
         return output.Trim();
     }

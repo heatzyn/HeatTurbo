@@ -12,11 +12,13 @@ public sealed class TelemetryService : IDisposable
     private readonly object _cpuLock = new();
     private ulong _previousIdle, _previousKernel, _previousUser;
     private double _gpu, _disk;
+    private int _disposed;
 
     public TelemetryService()
     {
         ReadCpu();
-        _performanceTimer = new System.Threading.Timer(async _ => await RefreshPerformanceAsync(), null, TimeSpan.Zero, TimeSpan.FromMilliseconds(850));
+        _performanceTimer = new System.Threading.Timer(
+            state => { _ = RefreshPerformanceAsync(); }, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(1500));
     }
 
     public Task<TelemetrySnapshot> ReadAsync(CancellationToken ct) =>
@@ -42,22 +44,49 @@ public sealed class TelemetryService : IDisposable
         return GlobalMemoryStatusEx(ref status) ? status.MemoryLoad : 0;
     }
 
-    private static async Task<(double Gpu, double Disk)> ReadPerformanceDataAsync(CancellationToken ct)
+    private static async Task<(double Gpu, double Disk)?> ReadPerformanceDataAsync(CancellationToken ct)
     {
-        if (!OperatingSystem.IsWindows()) return (0, 0);
-        const string script = "$g=Get-CimInstance Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine -ErrorAction SilentlyContinue|Where-Object {$_.Name -match 'engtype_3D'}|Measure-Object UtilizationPercentage -Maximum;$d=Get-CimInstance Win32_PerfFormattedData_PerfDisk_PhysicalDisk -Filter \"Name='_Total'\" -ErrorAction SilentlyContinue;[pscustomobject]@{gpu=[math]::Min(100,[double]$g.Maximum);disk=[math]::Min(100,[double]$d.PercentDiskTime)}|ConvertTo-Json -Compress";
+        if (!OperatingSystem.IsWindows()) return null;
+        const string script = """
+            $gpu=$null
+            $nvidia=Get-Command nvidia-smi.exe -ErrorAction SilentlyContinue
+            if($null-ne$nvidia){
+              $lines=& $nvidia.Source '--query-gpu=utilization.gpu' '--format=csv,noheader,nounits' 2>$null
+              if($LASTEXITCODE-eq 0){
+                $samples=@($lines|ForEach-Object{$parsed=0.0;if([double]::TryParse(([string]$_).Trim(),[Globalization.NumberStyles]::Float,[Globalization.CultureInfo]::InvariantCulture,[ref]$parsed)){$parsed}})
+                if($samples.Count-gt 0){$gpu=($samples|Measure-Object -Maximum).Maximum}
+              }
+            }
+            if($null-eq$gpu){
+              $engines=Get-CimInstance Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine -ErrorAction SilentlyContinue|Where-Object {$_.Name-match'engtype_3D'}|Measure-Object UtilizationPercentage -Maximum
+              $gpu=[double]$engines.Maximum
+            }
+            $d=Get-CimInstance Win32_PerfFormattedData_PerfDisk_PhysicalDisk -Filter "Name='_Total'" -ErrorAction SilentlyContinue
+            [pscustomobject]@{gpu=[math]::Min(100,[double]$gpu);disk=[math]::Min(100,[double]$d.PercentDiskTime)}|ConvertTo-Json -Compress
+            """;
         try
         {
-            using var doc = JsonDocument.Parse(await SystemInfoService.RunPowerShellAsync(script, ct));
+            using var doc = JsonDocument.Parse(await SystemInfoService.RunPowerShellAsync(
+                script, ct, TimeSpan.FromSeconds(10)));
             return (Number(doc.RootElement,"gpu"), Number(doc.RootElement,"disk"));
         }
-        catch { return (0, 0); }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
+        catch { return null; }
     }
 
     private async Task RefreshPerformanceAsync()
     {
-        if (!await _performanceGate.WaitAsync(0)) return;
-        try { var values = await ReadPerformanceDataAsync(CancellationToken.None); Volatile.Write(ref _gpu, values.Gpu); Volatile.Write(ref _disk, values.Disk); }
+        if (Volatile.Read(ref _disposed) != 0 || !await _performanceGate.WaitAsync(0)) return;
+        try
+        {
+            var values = await ReadPerformanceDataAsync(CancellationToken.None);
+            if (values is { } sample)
+            {
+                Volatile.Write(ref _gpu, sample.Gpu);
+                Volatile.Write(ref _disk, sample.Disk);
+            }
+        }
+        catch { }
         finally { _performanceGate.Release(); }
     }
 
@@ -68,5 +97,10 @@ public sealed class TelemetryService : IDisposable
     [StructLayout(LayoutKind.Sequential)] private struct MemoryStatus { public uint Length; public uint MemoryLoad; public ulong TotalPhys, AvailPhys, TotalPageFile, AvailPageFile, TotalVirtual, AvailVirtual, AvailExtendedVirtual; }
     [DllImport("kernel32.dll", SetLastError=true)] private static extern bool GetSystemTimes(out FileTime idle, out FileTime kernel, out FileTime user);
     [DllImport("kernel32.dll", SetLastError=true)] private static extern bool GlobalMemoryStatusEx(ref MemoryStatus status);
-    public void Dispose() { _performanceTimer.Dispose(); _performanceGate.Dispose(); }
+    public void Dispose()
+    {
+        Interlocked.Exchange(ref _disposed, 1);
+        _performanceTimer.Dispose();
+        // A callback may still be releasing the gate; disposing it here can crash the process.
+    }
 }

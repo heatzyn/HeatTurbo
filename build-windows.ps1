@@ -3,6 +3,10 @@ $project = Join-Path $PSScriptRoot "HeatTurbo.csproj"
 $output = Join-Path $PSScriptRoot "release\win-x64"
 $installer = Join-Path $PSScriptRoot "installer\HeatTurboSetup.iss"
 
+if (Test-Path $output) {
+  Remove-Item -LiteralPath $output -Recurse -Force
+}
+
 dotnet publish $project -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=true `
   -p:IncludeNativeLibrariesForSelfExtract=true `

@@ -4,6 +4,10 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -13,6 +17,25 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check interface JavaScript
+        shell: pwsh
+        run: node --check wwwroot/js/site.js
+      - name: Validate package version
+        shell: pwsh
+        run: |
+          $projectText = Get-Content HeatTurbo.csproj -Raw
+          $installerText = Get-Content installer\HeatTurboSetup.iss -Raw
+          $projectVersion = [regex]::Match($projectText, '<Version>([^<]+)</Version>').Groups[1].Value
+          $installerVersion = [regex]::Match($installerText, '#define MyAppVersion "([^"]+)"').Groups[1].Value
+          if (-not $projectVersion -or $projectVersion -ne $installerVersion) {
+            throw "Versões divergentes: projeto=$projectVersion instalador=$installerVersion"
+          }
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and $env:GITHUB_REF_NAME -ne "v$projectVersion") {
+            throw "A tag $env:GITHUB_REF_NAME não corresponde à versão v$projectVersion"
+          }
       - name: Publish HeatTurbo
         shell: pwsh
         run: dotnet publish HeatTurbo.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o release/win-x64
@@ -32,3 +55,10 @@ jobs:
           name: HeatTurbo-Installer
           path: release/installer/HeatTurbo-Setup.exe
           if-no-files-found: error
+      - name: Publish versioned release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/installer/HeatTurbo-Setup.exe
+          generate_release_notes: true
+          make_latest: true
