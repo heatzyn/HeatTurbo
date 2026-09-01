@@ -21,6 +21,7 @@ internal static class Program
         builder.Services.AddSingleton<DriverService>();
         builder.Services.AddSingleton<TelemetryService>();
         builder.Services.AddSingleton<SystemToolsService>();
+        builder.Services.AddSingleton<NvidiaControlService>();
 
         using var app = builder.Build();
         if (!app.Environment.IsDevelopment()) app.UseExceptionHandler("/Error");
@@ -90,6 +91,17 @@ internal static class Program
             return result.Success ? (IResult)Results.Ok(result) : Results.BadRequest(result);
         });
         app.MapGet("/api/telemetry", async (TelemetryService service, CancellationToken ct) => Results.Ok(await service.ReadAsync(ct)));
+        app.MapGet("/api/nvidia", async (NvidiaControlService service, CancellationToken ct) => Results.Ok(await service.GetAllAsync()));
+        app.MapPost("/api/nvidia/{id}/apply", async (string id, NvidiaControlService service, CancellationToken ct) =>
+        {
+            var result = await service.ApplyAsync(id, ct);
+            return result.Success ? (IResult)Results.Ok(result) : Results.BadRequest(result);
+        });
+        app.MapPost("/api/nvidia/{id}/restore", async (string id, NvidiaControlService service, CancellationToken ct) =>
+        {
+            var result = await service.RestoreAsync(id, ct);
+            return result.Success ? (IResult)Results.Ok(result) : Results.BadRequest(result);
+        });
         app.MapGet("/api/tools", (SystemToolsService service) => Results.Ok(service.Status()));
         app.MapPost("/api/tools/startup/{enabled:bool}", (bool enabled, SystemToolsService service) => Results.Ok(service.SetStartup(enabled)));
         app.MapPost("/api/tools/auto-clean/{enabled:bool}", (bool enabled, SystemToolsService service) => Results.Ok(service.SetAutoClean(enabled)));

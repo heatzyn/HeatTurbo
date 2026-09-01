@@ -12,6 +12,7 @@
       <button class="nav-item" data-view="bios"><span>⌘</span>BIOS</button>
       <button class="nav-item" data-view="backups"><span>↶</span>Backups</button>
       <button class="nav-item" data-view="drivers"><span>▣</span>Drivers</button>
+      <button class="nav-item" data-view="nvidia"><span>◈</span>NVIDIA</button>
       <button class="nav-item" data-view="tools"><span>✦</span>Automação</button>
       <button class="nav-item" data-view="system"><span>▣</span>Meu PC</button>
     </nav>
@@ -72,6 +73,13 @@
       <div class="section-head"><div><span class="eyebrow">WINDOWS UPDATE</span><h2>Drivers do seu PC</h2></div><div class="button-row"><button class="ghost" id="driver-scan-btn">Verificar drivers</button><button class="primary compact" id="driver-install-btn">Instalar atualizações</button></div></div>
       <div class="notice"><span>✓</span><p><strong>Sem instaladores desconhecidos.</strong> Detectamos versões instaladas e abrimos somente NVIDIA, AMD, Intel ou Windows Update.</p></div>
       <div class="driver-list" id="driver-list"><div class="loading">Clique em “Verificar drivers”.</div></div>
+    </section>
+
+    <section class="view" id="nvidia">
+      <div class="section-head"><div><span class="eyebrow">PAINEL DE CONTROLE NVIDIA</span><h2>Ajustes de driver para CS2</h2></div><div class="status-pill"><b id="nvidia-active-count">0</b> ativos</div></div>
+      <div class="notice"><span>↶</span><p><strong>Mesmo mecanismo do NVIDIA Control Panel.</strong> Cada item muda o perfil global do driver e pode ser restaurado individualmente ao padrão da NVIDIA. Reinicie o CS2 depois de aplicar.</p></div>
+      <div class="notice warning" id="nvidia-unavailable" hidden><span>!</span><p><strong>Indisponível nesta máquina.</strong> <span id="nvidia-unavailable-message"></span></p></div>
+      <div class="optimization-list" id="nvidia-list"><div class="loading">Lendo o perfil do driver NVIDIA...</div></div>
     </section>
 
     <section class="view" id="tools">
