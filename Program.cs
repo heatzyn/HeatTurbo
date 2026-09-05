@@ -22,6 +22,7 @@ internal static class Program
         builder.Services.AddSingleton<TelemetryService>();
         builder.Services.AddSingleton<SystemToolsService>();
         builder.Services.AddSingleton<NvidiaControlService>();
+        builder.Services.AddSingleton<GraphicsDriverUpdateService>();
 
         using var app = builder.Build();
         if (!app.Environment.IsDevelopment()) app.UseExceptionHandler("/Error");
@@ -88,6 +89,12 @@ internal static class Program
         app.MapPost("/api/drivers/install", async (DriverService service, CancellationToken ct) =>
         {
             var result = await service.InstallFromWindowsUpdateAsync(ct);
+            return result.Success ? (IResult)Results.Ok(result) : Results.BadRequest(result);
+        });
+        app.MapGet("/api/drivers/update/{vendor}", async (string vendor, GraphicsDriverUpdateService service, CancellationToken ct) => Results.Ok(await service.CheckAsync(vendor, ct)));
+        app.MapPost("/api/drivers/update/{vendor}/download", async (string vendor, GraphicsDriverUpdateService service, CancellationToken ct) =>
+        {
+            var result = await service.DownloadAndLaunchAsync(vendor, ct);
             return result.Success ? (IResult)Results.Ok(result) : Results.BadRequest(result);
         });
         app.MapGet("/api/telemetry", async (TelemetryService service, CancellationToken ct) => Results.Ok(await service.ReadAsync(ct)));
