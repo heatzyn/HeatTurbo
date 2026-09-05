@@ -38,7 +38,16 @@ public sealed record DriverScanResult(
     string Message,
     IReadOnlyList<DriverDeviceInfo> Devices,
     IReadOnlyList<DriverUpdateInfo> AvailableUpdates,
-    DateTimeOffset ScannedAt);
+    DateTimeOffset ScannedAt,
+    DriverDiagnostics? Diagnostics = null);
+
+public sealed record DriverDiagnostics(
+    bool IsAdministrator,
+    string WindowsUpdateService,
+    string BitsService,
+    string CryptographicService,
+    bool DriversExcludedByPolicy,
+    bool ManagedUpdateServer);
 
 public sealed record DriverInstallItemResult(
     string UpdateId,
@@ -112,6 +121,7 @@ public sealed class DriverService
 
             DriverDeviceInfo[] devices = [];
             DriverUpdateInfo[] updates = [];
+            DriverDiagnostics? diagnostics = null;
             string? inventoryError = null;
             string? updateError = null;
 
@@ -152,6 +162,13 @@ public sealed class DriverService
                         Clean(x.Date), Clean(x.HardwareId), Math.Max(0, x.SizeBytes), x.IsDownloaded,
                         x.MayRequireRestart))
                     .ToArray();
+                if (wire.Diagnostics is { } status)
+                {
+                    diagnostics = new DriverDiagnostics(status.IsAdministrator,
+                        Clean(status.WindowsUpdateService), Clean(status.BitsService),
+                        Clean(status.CryptographicService), status.DriversExcludedByPolicy,
+                        status.ManagedUpdateServer);
+                }
             }
             catch (OperationCanceledException) when (ct.IsCancellationRequested)
             {
@@ -172,8 +189,14 @@ public sealed class DriverService
             else if (inventoryError is not null && updates.Length > 0)
                 message = $"{updates.Length} atualização(ões) encontrada(s), mas o inventário local falhou. {inventoryError}";
 
-            var result = new DriverScanResult(true, inventorySucceeded, updateScanSucceeded, "Windows Update",
-                message, devices, updates, DateTimeOffset.UtcNow);
+            if (diagnostics?.DriversExcludedByPolicy == true && updates.Length == 0 && updateError is null)
+                message += " Uma política do Windows exclui drivers das atualizações automáticas; esta consulta manual continua respeitando o catálogo aplicável.";
+            if (diagnostics?.ManagedUpdateServer == true)
+                message += " Este computador usa um servidor de atualizações gerenciado pela organização.";
+
+            var result = new DriverScanResult(true, inventorySucceeded, updateScanSucceeded,
+                "Windows Update · pacotes publicados pelos fabricantes",
+                message, devices, updates, DateTimeOffset.UtcNow, diagnostics);
             if (inventorySucceeded && updateScanSucceeded) _cachedScan = result;
             return result;
         }
@@ -342,7 +365,7 @@ public sealed class DriverService
     }
 
     private sealed record DriverInventoryWire(DriverDeviceWire[]? Devices);
-    private sealed record DriverUpdatesWire(DriverUpdateWire[]? Updates);
+    private sealed record DriverUpdatesWire(DriverUpdateWire[]? Updates, DriverDiagnosticsWire? Diagnostics);
     private sealed record DriverDeviceWire(
         string? DeviceId, string? Device, string? Manufacturer, string? Provider, string? Version,
         string? Date, string? Kind, string? Role, bool IsDedicatedGpu, bool IsSigned);
@@ -350,6 +373,9 @@ public sealed class DriverService
         string? UpdateId, int RevisionNumber, string? Title, string? DriverClass, string? Manufacturer,
         string? Provider, string? Model, string? Version, string? Date, string? HardwareId,
         long SizeBytes, bool IsDownloaded, bool MayRequireRestart);
+    private sealed record DriverDiagnosticsWire(
+        bool IsAdministrator, string? WindowsUpdateService, string? BitsService,
+        string? CryptographicService, bool DriversExcludedByPolicy, bool ManagedUpdateServer);
     private sealed record DriverInstallWire(
         int Found, int Downloaded, int Installed, int Warnings, int Failed, bool RebootRequired,
         DriverInstallItemWire[]? Items);
@@ -378,6 +404,33 @@ public sealed class DriverService
             return ($names -join ' ')
         }
 
+        function Ensure-HeatTurboUpdateServices {
+            foreach ($serviceName in @('wuauserv', 'BITS', 'CryptSvc')) {
+                $service = Get-Service -Name $serviceName -ErrorAction Stop
+                if ([string]$service.StartType -eq 'Disabled') {
+                    throw "O serviço $serviceName está desativado. Reative-o para instalar drivers oficiais."
+                }
+                if ([string]$service.Status -ne 'Running') {
+                    Start-Service -Name $serviceName -ErrorAction Stop
+                }
+            }
+        }
+
+        function Get-HeatTurboDriverDiagnostics {
+            $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+            $principal = [Security.Principal.WindowsPrincipal]::new($identity)
+            $policy = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate' -ErrorAction SilentlyContinue
+            $auPolicy = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU' -ErrorAction SilentlyContinue
+            [pscustomobject]@{
+                isAdministrator = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+                windowsUpdateService = [string](Get-Service -Name 'wuauserv' -ErrorAction SilentlyContinue).Status
+                bitsService = [string](Get-Service -Name 'BITS' -ErrorAction SilentlyContinue).Status
+                cryptographicService = [string](Get-Service -Name 'CryptSvc' -ErrorAction SilentlyContinue).Status
+                driversExcludedByPolicy = [int](Get-SafeValue { $policy.ExcludeWUDriversInQualityUpdate } 0) -eq 1
+                managedUpdateServer = [int](Get-SafeValue { $auPolicy.UseWUServer } 0) -eq 1 -or -not [string]::IsNullOrWhiteSpace([string](Get-SafeValue { $policy.WUServer }))
+            }
+        }
+
         function Test-IsFirmware($Update) {
             $driverClass = [string](Get-SafeValue { $Update.DriverClass })
             $title = [string](Get-SafeValue { $Update.Title })
@@ -401,6 +454,7 @@ public sealed class DriverService
 
         function Get-ApplicableDriverUpdates($Session) {
             $searcher = $Session.CreateUpdateSearcher()
+            $searcher.Online = $true
             $searchResult = $searcher.Search("IsInstalled=0 and Type='Driver' and IsHidden=0")
             if ([int]$searchResult.ResultCode -ge 4) {
                 throw "A pesquisa do Windows Update falhou (resultado $([int]$searchResult.ResultCode))."
@@ -456,6 +510,7 @@ public sealed class DriverService
         $ErrorActionPreference = 'Stop'
         {{SharedPowerShellFunctions}}
 
+        Ensure-HeatTurboUpdateServices
         $session = New-Object -ComObject Microsoft.Update.Session
         $session.ClientApplicationID = 'HeatTurbo'
         $applicable = @(Get-ApplicableDriverUpdates $session)
@@ -483,7 +538,10 @@ public sealed class DriverService
             }
         }
 
-        [pscustomobject]@{ updates = @($updates) } | ConvertTo-Json -Depth 5 -Compress
+        [pscustomobject]@{
+            updates = @($updates)
+            diagnostics = (Get-HeatTurboDriverDiagnostics)
+        } | ConvertTo-Json -Depth 5 -Compress
         """;
 
     private static string BuildInstallScript(IReadOnlyList<DriverUpdateSelection> requestedUpdates)
@@ -496,6 +554,7 @@ public sealed class DriverService
 
         $requestedJson = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{{encodedRequested}}'))
         $requested = @($requestedJson | ConvertFrom-Json)
+        Ensure-HeatTurboUpdateServices
 
         function Test-WasRequested($Update) {
             $updateId = [string]$Update.Identity.UpdateID

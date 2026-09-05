@@ -1,0 +1,35 @@
+.driver-diagnostics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -4px 0 18px;
+}
+
+.driver-diagnostics[hidden] {
+  display: none;
+}
+
+.driver-diagnostics span {
+  padding: 7px 9px;
+  border: 1px solid #292929;
+  border-radius: 6px;
+  background: #101010;
+  color: #6f6f6f;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.driver-diagnostics b {
+  margin-left: 5px;
+  color: #bcbcbc;
+}
+
+.driver-diagnostics .diagnostic-warning {
+  border-color: rgba(255, 173, 32, .3);
+  color: #ffad20;
+}
+
+.driver-diagnostics .diagnostic-warning b {
+  color: #e8c27e;
+}

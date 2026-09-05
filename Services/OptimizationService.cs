@@ -53,6 +53,8 @@ public sealed class OptimizationService
             @"HKCU:\Software\Microsoft\GameBar",
             Dword("AutoGameModeEnabled", "1")),
 
+        Cs2GpuPreference(),
+
         RegistrySetting("game-dvr", "Desativar gravação em segundo plano",
             "Evita que o Game DVR grave partidas sem você pedir.", "Gaming", false,
             @"HKCU:\System\GameConfigStore",
@@ -62,6 +64,11 @@ public sealed class OptimizationService
             "Desliga a captura em segundo plano do Windows sem remover a Game Bar.", "Gaming", false,
             @"HKCU:\Software\Microsoft\Windows\CurrentVersion\GameDVR",
             Dword("AppCaptureEnabled", "0")),
+
+        RegistrySetting("game-dvr-policy", "Bloquear gravação automática de jogos",
+            "Aplica a política oficial do Windows que impede gravação e transmissão em segundo plano.", "Gaming", true,
+            @"HKLM:\SOFTWARE\Policies\Microsoft\Windows\GameDVR",
+            Dword("AllowGameDVR", "0")),
 
         RegistrySetting("mouse-acceleration", "Desativar aceleração do mouse",
             "Mantém o movimento do ponteiro consistente; o CS2 com entrada bruta pode ignorar este ajuste.", "Latência", false,
@@ -156,17 +163,56 @@ public sealed class OptimizationService
 
         PowerSetting("core-parking", "Manter núcleos disponíveis na tomada",
             "Reduz o estacionamento de núcleos no plano atual somente quando conectado à energia.", "Performance",
-            "54533251-82be-4824-96c1-47b60b740d00", "0cc5b647-c1df-4637-891a-dec35c318583", 100)
+            "54533251-82be-4824-96c1-47b60b740d00", "0cc5b647-c1df-4637-891a-dec35c318583", 100),
+
+        PowerSetting("cpu-max-state", "Liberar estado máximo do processador",
+            "Remove limites do plano de energia e permite até 100% do desempenho da CPU na tomada.", "Performance",
+            "54533251-82be-4824-96c1-47b60b740d00", "bc5038f7-23e0-4960-96da-33abaf5935ec", 100),
+
+        PowerSetting("cpu-epp", "Priorizar desempenho da CPU (EPP)",
+            "Define a preferência energia/desempenho para 0 na tomada; pode aumentar consumo, temperatura e ruído.", "Latência",
+            "54533251-82be-4824-96c1-47b60b740d00", "36687f9e-e3a5-4dbf-b1dc-15eb381c6863", 0),
+
+        PowerSetting("cpu-boost", "Boost responsivo do processador",
+            "Usa o modo de boost agressivo suportado pelo plano atual; monitore temperatura e estabilidade.", "Performance",
+            "54533251-82be-4824-96c1-47b60b740d00", "be337238-0d82-4146-a960-4f3749d470c7", 2),
+
+        PowerSetting("cpu-fast-ramp", "Subida rápida de frequência da CPU",
+            "Usa a política Rocket do Windows para responder mais rápido ao aumento de carga na tomada.", "Latência",
+            "54533251-82be-4824-96c1-47b60b740d00", "465e1f50-b610-473a-ab58-00d1077dc418", 2),
+
+        PowerSetting("cpu-ramp-threshold", "Antecipar aumento de frequência da CPU",
+            "Reduz para 10% o limiar de carga que aciona a subida de desempenho na tomada.", "Latência",
+            "54533251-82be-4824-96c1-47b60b740d00", "06cadf0e-64ed-448a-8927-ce7bf90eb35d", 10),
+
+        PowerSetting("cpu-slow-downclock", "Evitar queda brusca de frequência",
+            "Usa a política Single do Windows para reduzir a frequência de forma menos agressiva.", "Latência",
+            "54533251-82be-4824-96c1-47b60b740d00", "40fbe60b-bc98-4c1d-a37f-76996c3ebff3", 1),
+
+        PowerSetting("cpu-downclock-threshold", "Atrasar redução de frequência da CPU",
+            "Define em 8% o limiar de redução de desempenho para cargas oscilantes.", "Latência",
+            "54533251-82be-4824-96c1-47b60b740d00", "12a0ab44-fe28-4fa9-b3bd-4b64f44960a6", 8),
+
+        PowerSetting("cpu-min-state", "Frequência mínima de CPU em 100%",
+            "Mantém o estado mínimo em 100% na tomada. Use somente com refrigeração adequada; pode aumentar bastante o calor.", "Experimental",
+            "54533251-82be-4824-96c1-47b60b740d00", "893dee8e-2bef-41e0-89c6-b55d0929964c", 100),
+
+        PowerSetting("wifi-max-performance", "Wi-Fi em desempenho máximo",
+            "Desativa a economia do adaptador sem fio na tomada para evitar transições de energia durante partidas.", "Rede",
+            "19cbb8fa-5279-450e-9fac-8a3d5fedd0c1", "12bbebe6-58d6-4636-95bb-3217ef867c1a", 0)
     ];
 
     private static readonly ProfileDefinition[] Profiles =
     [
         new("balanced", "Equilibrado",
             "Reduz gravações e tarefas dispensáveis sem alterar o plano de energia.",
-            ["game-mode", "game-dvr", "game-capture", "xbox-overlay", "background-apps", "delivery-optimization", "windows-suggestions", "edge-background"]),
+            ["game-mode", "game-dvr", "game-capture", "game-dvr-policy", "xbox-overlay", "background-apps", "delivery-optimization", "windows-suggestions", "edge-background"]),
         new("competitive", "Competitivo / CS2",
-            "Soma ajustes de energia e latência ao modo equilibrado. Reinicie antes de comparar benchmarks.",
-            ["game-mode", "game-dvr", "game-capture", "xbox-overlay", "mouse-acceleration", "background-apps", "delivery-optimization", "windows-suggestions", "edge-background", "high-performance", "power-throttling", "games-task", "usb-suspend", "pcie-link-state", "core-parking"])
+            "Prioriza a GPU dedicada e reduz gravação, economia e rampas lentas. Compare frametime e temperatura antes/depois.",
+            ["game-mode", "cs2-gpu-preference", "game-dvr", "game-capture", "game-dvr-policy", "xbox-overlay", "mouse-acceleration", "background-apps", "delivery-optimization", "windows-suggestions", "edge-background", "high-performance", "power-throttling", "games-task", "usb-suspend", "pcie-link-state", "core-parking", "cpu-max-state", "cpu-epp", "cpu-boost", "cpu-fast-ramp", "cpu-ramp-threshold"]),
+        new("maximum", "Desempenho máximo / tomada",
+            "Amplia o perfil competitivo com frequência mínima, queda lenta de clock e Wi-Fi sem economia. Exige boa refrigeração.",
+            ["game-mode", "cs2-gpu-preference", "game-dvr", "game-capture", "game-dvr-policy", "xbox-overlay", "mouse-acceleration", "background-apps", "high-performance", "power-throttling", "games-task", "usb-suspend", "pcie-link-state", "core-parking", "cpu-max-state", "cpu-epp", "cpu-boost", "cpu-fast-ramp", "cpu-ramp-threshold", "cpu-slow-downclock", "cpu-downclock-threshold", "cpu-min-state", "wifi-max-performance"])
     ];
 
     public IReadOnlyList<OptimizationProfile> GetProfiles() => Profiles.Select(profile =>
@@ -474,6 +520,74 @@ public sealed class OptimizationService
         var legacyRestore = string.Concat(values.Select(value =>
             $"Remove-ItemProperty -LiteralPath {quotedPath} -Name {QuotePowerShell(value.Name)} -ErrorAction SilentlyContinue;"));
         return new(id, name, description, category, restart, test, apply, capture, RestoreCaptured, legacyRestore);
+    }
+
+    private static Definition Cs2GpuPreference()
+    {
+        const string findCs2 = """
+            function Find-Cs2Executable {
+                $candidates = @()
+                foreach ($uninstallKey in @(
+                    'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 730',
+                    'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 730')) {
+                    $app = Get-ItemProperty -LiteralPath $uninstallKey -ErrorAction SilentlyContinue
+                    if ($app.InstallLocation) {
+                        $candidates += Join-Path ([string]$app.InstallLocation) 'game\bin\win64\cs2.exe'
+                    }
+                }
+
+                $steam = Get-ItemProperty -LiteralPath 'HKCU:\Software\Valve\Steam' -ErrorAction SilentlyContinue
+                if ($steam.SteamPath) {
+                    $steamRoot = [string]$steam.SteamPath
+                    $candidates += Join-Path $steamRoot 'steamapps\common\Counter-Strike Global Offensive\game\bin\win64\cs2.exe'
+                    $librariesFile = Join-Path $steamRoot 'steamapps\libraryfolders.vdf'
+                    if (Test-Path -LiteralPath $librariesFile) {
+                        $librariesText = Get-Content -LiteralPath $librariesFile -Raw -ErrorAction SilentlyContinue
+                        foreach ($pathMatch in [regex]::Matches([string]$librariesText, '"path"\s*"([^"]+)"')) {
+                            $libraryRoot = $pathMatch.Groups[1].Value -replace '\\\\', '\'
+                            $candidates += Join-Path $libraryRoot 'steamapps\common\Counter-Strike Global Offensive\game\bin\win64\cs2.exe'
+                        }
+                    }
+                }
+
+                foreach ($candidate in @($candidates | Select-Object -Unique)) {
+                    if ($candidate -and (Test-Path -LiteralPath $candidate -PathType Leaf)) {
+                        return (Resolve-Path -LiteralPath $candidate).Path
+                    }
+                }
+                throw 'O executável do CS2 não foi encontrado nas bibliotecas da Steam.'
+            }
+            """;
+        var keyPath = QuotePowerShell(@"HKCU:\Software\Microsoft\DirectX\UserGpuPreferences");
+        var test = findCs2 +
+                   $"$path=Find-Cs2Executable;$key=Get-Item -LiteralPath {keyPath} -ErrorAction SilentlyContinue;" +
+                   "$value=$(if($null-ne$key){[string]$key.GetValue($path,'')}else{''});" +
+                   "if($value-match'(?i)(^|;)GpuPreference=2(;|$)'){'true'}else{'false'}";
+        var capture = findCs2 +
+                      $"$path=Find-Cs2Executable;$key=Get-Item -LiteralPath {keyPath} -ErrorAction SilentlyContinue;" +
+                      "$exists=$null-ne$key -and $key.GetValueNames()-contains $path;" +
+                      "$state=[pscustomobject]@{path=$path;exists=$exists;kind=$(if($exists){$key.GetValueKind($path).ToString()}else{$null});value=$(if($exists){$key.GetValue($path)}else{$null})};" +
+                      "$state|ConvertTo-Json -Compress";
+        var apply = findCs2 +
+                    $"$path=Find-Cs2Executable;New-Item -Path {keyPath} -Force|Out-Null;$key=Get-Item -LiteralPath {keyPath};" +
+                    "$current=[string]$key.GetValue($path,'');$parts=@($current-split';'|Where-Object{$_-and$_-notmatch'(?i)^\\s*GpuPreference='});" +
+                    "$updated=(@($parts)+'GpuPreference=2')-join';';$updated+=';';" +
+                    $"New-ItemProperty -LiteralPath {keyPath} -Name $path -PropertyType String -Value $updated -Force|Out-Null";
+
+        string RestoreCaptured(string baseline)
+        {
+            var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(baseline));
+            return $"$state=([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{encoded}'))|ConvertFrom-Json);" +
+                   "$path=[string]$state.path;if([string]::IsNullOrWhiteSpace($path)){throw 'Caminho original do CS2 não disponível.'};" +
+                   $"if([bool]$state.exists){{New-Item -Path {keyPath} -Force|Out-Null;New-ItemProperty -LiteralPath {keyPath} -Name $path " +
+                   "-PropertyType ([Microsoft.Win32.RegistryValueKind]$state.kind) -Value $state.value -Force|Out-Null}" +
+                   $"else{{Remove-ItemProperty -LiteralPath {keyPath} -Name $path -ErrorAction SilentlyContinue}}";
+        }
+
+        return new("cs2-gpu-preference", "Usar GPU dedicada no CS2",
+            "Registra o cs2.exe como aplicativo de alto desempenho nas preferências gráficas do Windows.",
+            "Gaming", false, test, apply, capture, RestoreCaptured,
+            "throw 'O caminho original do CS2 não está disponível.'");
     }
 
     private static Definition ActivePowerScheme()

@@ -4,7 +4,7 @@
 
 ### Seu Windows preparado para jogar CS2 — com controle e caminho de volta.
 
-[Baixar o instalador](https://github.com/heatzyn/HeatTurbo/releases/latest/download/HeatTurbo-Setup.exe) · [O que funciona](#-o-que-já-funciona) · [Segurança](#-segurança-primeiro) · [Desenvolvimento](#-desenvolvimento)
+[Baixar o instalador](https://github.com/heatzyn/HeatTurbo/releases/latest/download/HeatTurbo-Setup.exe) · [O que funciona](#o-que-já-funciona) · [Segurança](#-segurança-primeiro) · [Desenvolvimento](#-desenvolvimento)
 
 </div>
 
@@ -12,7 +12,7 @@
 
 O HeatTurbo é um aplicativo desktop para Windows que identifica o hardware, explica cada ajuste e cria proteção antes de mudar o sistema. O projeto ainda está em fase de testes: use em uma máquina de teste ou revise cada opção antes de aplicar.
 
-Versão atual: **0.5.0** · [Ver mudanças](CHANGELOG.md)
+Versão atual em desenvolvimento: **0.6.0** · [Ver mudanças](CHANGELOG.md)
 
 ## Como baixar e instalar
 
@@ -31,14 +31,14 @@ O Windows pode mostrar um aviso do SmartScreen enquanto os binários não possue
 - Aplicativo em janela própria; nenhum navegador precisa ser aberto.
 - Leitura local de CPU, GPU, RAM, disco, placa-mãe, BIOS e Windows.
 - Telemetria animada de uso de CPU, GPU 3D, RAM e disco atualizada durante o uso.
-- Catálogo com 22 ajustes de jogos, desempenho, latência, energia, rede e interface.
-- Modos **Equilibrado** e **Competitivo / CS2**, além da restauração de todos os ajustes de uma vez.
+- Catálogo com 33 ajustes de jogos, desempenho, latência, energia, rede e interface.
+- Modos **Equilibrado**, **Competitivo / CS2** e **Desempenho máximo / tomada**, além da restauração de todos os ajustes de uma vez.
 - Estado original de cada ajuste salvo localmente e verificação após aplicar ou restaurar.
 - Ponto de restauração automático, criado e confirmado antes da primeira mudança de cada sessão.
 - Criação, consulta e restauração para um ponto escolhido diretamente pela aba **Backups**.
 - Assistente de BIOS que detecta o hardware e gera recomendações sem gravar firmware.
 - Inventário de GPU dedicada/integrada e drivers de chipset, incluindo fornecedor, versão e assinatura.
-- Busca, download e instalação dentro do app dos drivers aplicáveis e assinados oferecidos pelo Windows Update, com pareamento por hardware ID e backup prévio.
+- Busca, download e instalação dentro do app dos drivers aplicáveis e assinados oferecidos pelo Windows Update, com pareamento por hardware ID, diagnóstico dos serviços e backup prévio.
 - Inicialização opcional com o Windows e limpeza automática de temporários antigos.
 - Build e instalador automáticos no GitHub Actions.
 
@@ -50,7 +50,7 @@ O Windows pode mostrar um aviso do SmartScreen enquanto os binários não possue
 4. Comece pelo modo **Equilibrado** ou ative somente uma otimização por vez e teste o CS2.
 5. Se não gostar, restaure o ajuste, use **Restaurar todos** ou abra **Backups → Restaurar** no ponto criado antes das mudanças. A restauração do sistema reinicia o PC.
 6. Em **BIOS**, leia o checklist compatível e altere opções manualmente somente se souber voltar ao padrão.
-7. Em **Drivers**, clique em **Verificar drivers**, revise os pacotes encontrados e só então use **Baixar e instalar**.
+7. Em **Drivers**, revise os pacotes encontrados e use **Atualizar no HeatTurbo**. Nenhum navegador ou aplicativo do fabricante é aberto.
 
 ## 🛡️ Segurança primeiro
 
@@ -64,7 +64,9 @@ O HeatTurbo usa a API oficial do **Windows Update Agent**. O Windows compara os 
 
 O catálogo do Windows Update escolhe o melhor pacote aprovado para o equipamento, mas pode não conter no mesmo dia o Game Ready mais recente publicado no NVIDIA App, AMD Software ou Intel DSA. O HeatTurbo não finge contornar essa limitação e não instala silenciosamente pacotes fora de um canal oficial estável.
 
-Documentação técnica: [Windows Update Agent](https://learn.microsoft.com/windows/win32/wua_sdk/searching--downloading--and-installing-updates), [distribuição segura de drivers](https://learn.microsoft.com/windows-hardware/drivers/develop/distributing-a-driver-package) e [seleção por hardware](https://learn.microsoft.com/windows-hardware/drivers/install/how-windows-selects-a-driver-for-a-device).
+Ao abrir a aba, o HeatTurbo inicia somente os serviços oficiais necessários se estiverem parados, consulta o catálogo online e mostra políticas que podem limitar o resultado. Ele não altera políticas corporativas nem contorna WSUS. “Driver do processador” significa os componentes de chipset/sistema publicados por AMD, Intel ou pelo fabricante do computador; a CPU em si não recebe um driver gráfico genérico.
+
+Documentação técnica: [Windows Update Agent](https://learn.microsoft.com/windows/win32/wua_sdk/searching--downloading--and-installing-updates), [distribuição segura de drivers](https://learn.microsoft.com/windows-hardware/drivers/develop/distributing-a-driver-package) e [seleção por hardware](https://learn.microsoft.com/windows-hardware/drivers/install/how-windows-selects-a-driver-for-a-device). A triagem das otimizações está registrada em [docs/RESEARCH.md](docs/RESEARCH.md).
 
 ## Solução de problemas
 
