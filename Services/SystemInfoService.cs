@@ -91,7 +91,13 @@ public sealed class SystemInfoService
             throw new OperationCanceledException(operationToken);
         }
 
-        var start = new ProcessStartInfo("powershell.exe")
+        var powerShellPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.Windows),
+            "System32", "WindowsPowerShell", "v1.0", "powershell.exe");
+        if (!File.Exists(powerShellPath))
+            throw new InvalidOperationException("O PowerShell protegido do Windows não foi encontrado.");
+
+        var start = new ProcessStartInfo(powerShellPath)
         {
             UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,
             CreateNoWindow = true,

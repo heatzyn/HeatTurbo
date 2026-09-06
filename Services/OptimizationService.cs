@@ -595,29 +595,29 @@ public sealed class OptimizationService
         const string id = "high-performance";
         const string highPerformance = "8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c";
         const string balanced = "381b4222-f694-41f0-9685-ff5bb260df2e";
-        const string readScheme = "$output=powercfg.exe /getactivescheme;if($LASTEXITCODE-ne 0){throw ($output-join ' ')};$match=[regex]::Match(($output-join ' '),'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}');if(-not$match.Success){throw 'Plano de energia ativo não identificado.'};$match.Value.ToLowerInvariant()";
+        const string readScheme = "$output=& \"$env:SystemRoot\\System32\\powercfg.exe\" /getactivescheme;if($LASTEXITCODE-ne 0){throw ($output-join ' ')};$match=[regex]::Match(($output-join ' '),'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}');if(-not$match.Success){throw 'Plano de energia ativo não identificado.'};$match.Value.ToLowerInvariant()";
 
         string RestoreCaptured(string baseline)
         {
             var scheme = Guid.TryParse(baseline.Trim(), out var parsed) ? parsed.ToString() : balanced;
-            return $"$output=powercfg.exe /setactive {scheme};if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}}";
+            return $"$output=& \"$env:SystemRoot\\System32\\powercfg.exe\" /setactive {scheme};if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}}";
         }
 
         return new(id, "Plano de energia de alto desempenho",
             "Reduz economia agressiva de energia enquanto o computador está ligado à tomada.", "Performance", false,
             $"$scheme=&{{{readScheme}}};if($scheme-eq'{highPerformance}'){{'true'}}else{{'false'}}",
-            $"$output=powercfg.exe /setactive {highPerformance};if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}}",
+            $"$output=& \"$env:SystemRoot\\System32\\powercfg.exe\" /setactive {highPerformance};if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}}",
             readScheme, RestoreCaptured,
-            $"$output=powercfg.exe /setactive {balanced};if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}}");
+            $"$output=& \"$env:SystemRoot\\System32\\powercfg.exe\" /setactive {balanced};if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}}");
     }
 
     private static Definition PowerSetting(
         string id, string name, string description, string category,
         string subgroup, string setting, uint appliedValue)
     {
-        var read = $"$schemeOutput=powercfg.exe /getactivescheme;if($LASTEXITCODE-ne 0){{throw ($schemeOutput-join ' ')}};" +
+        var read = $"$schemeOutput=& \"$env:SystemRoot\\System32\\powercfg.exe\" /getactivescheme;if($LASTEXITCODE-ne 0){{throw ($schemeOutput-join ' ')}};" +
                    "$schemeMatch=[regex]::Match(($schemeOutput-join ' '),'[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}');if(-not$schemeMatch.Success){throw 'Plano de energia ativo não identificado.'};" +
-                   $"$query=powercfg.exe /query $schemeMatch.Value {subgroup} {setting};if($LASTEXITCODE-ne 0){{throw ($query-join ' ')}};" +
+                   $"$query=& \"$env:SystemRoot\\System32\\powercfg.exe\" /query $schemeMatch.Value {subgroup} {setting};if($LASTEXITCODE-ne 0){{throw ($query-join ' ')}};" +
                    "$hex=[regex]::Matches(($query-join ' '),'0x[0-9a-fA-F]+');if($hex.Count-lt 2){throw 'Valor do plano de energia não identificado.'};" +
                    "$ac=[Convert]::ToUInt32($hex[$hex.Count-2].Value.Substring(2),16);$dc=[Convert]::ToUInt32($hex[$hex.Count-1].Value.Substring(2),16);";
         var capture = read + "[pscustomobject]@{scheme=$schemeMatch.Value;ac=$ac;dc=$dc}|ConvertTo-Json -Compress";
@@ -627,13 +627,13 @@ public sealed class OptimizationService
             var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(baseline));
             return $"$state=([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('{encoded}'))|ConvertFrom-Json);" +
                    "[guid]$scheme=[string]$state.scheme;" +
-                   $"$output=powercfg.exe /setacvalueindex $scheme {subgroup} {setting} ([uint32]$state.ac);if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}};" +
-                   $"$output=powercfg.exe /setdcvalueindex $scheme {subgroup} {setting} ([uint32]$state.dc);if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}};" +
-                   "$output=powercfg.exe /setactive $scheme;if($LASTEXITCODE-ne 0){throw ($output-join ' ')}";
+                   $"$output=& \"$env:SystemRoot\\System32\\powercfg.exe\" /setacvalueindex $scheme {subgroup} {setting} ([uint32]$state.ac);if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}};" +
+                   $"$output=& \"$env:SystemRoot\\System32\\powercfg.exe\" /setdcvalueindex $scheme {subgroup} {setting} ([uint32]$state.dc);if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}};" +
+                   "$output=& \"$env:SystemRoot\\System32\\powercfg.exe\" /setactive $scheme;if($LASTEXITCODE-ne 0){throw ($output-join ' ')}";
         }
 
-        var apply = $"$output=powercfg.exe /setacvalueindex scheme_current {subgroup} {setting} {appliedValue};if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}};" +
-                    "$output=powercfg.exe /setactive scheme_current;if($LASTEXITCODE-ne 0){throw ($output-join ' ')}";
+        var apply = $"$output=& \"$env:SystemRoot\\System32\\powercfg.exe\" /setacvalueindex scheme_current {subgroup} {setting} {appliedValue};if($LASTEXITCODE-ne 0){{throw ($output-join ' ')}};" +
+                    "$output=& \"$env:SystemRoot\\System32\\powercfg.exe\" /setactive scheme_current;if($LASTEXITCODE-ne 0){throw ($output-join ' ')}";
         var test = read + $"if($ac-eq{appliedValue}){{'true'}}else{{'false'}}";
         return new(id, name, description, category, false, test, apply, capture, RestoreCaptured,
             "throw 'O estado original deste ajuste de energia não está disponível.'");

@@ -1,7 +1,7 @@
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 using System.Drawing;
-using System.Runtime.InteropServices;
+using System.Text.Json;
 using System.Windows.Forms;
 
 namespace HeatTurbo.Desktop;
@@ -54,23 +54,42 @@ public sealed class HeatTurboWindow : Form
             _webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
             _webView.CoreWebView2.Settings.IsZoomControlEnabled = false;
             _webView.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = false;
-            _webView.CoreWebView2.Settings.AreHostObjectsAllowed = true;
-            _webView.CoreWebView2.AddHostObjectToScript("heatTurbo", new HeatTurboHostBridge(_apiToken));
+            _webView.CoreWebView2.Settings.AreHostObjectsAllowed = false;
+            _webView.CoreWebView2.Settings.IsWebMessageEnabled = true;
+            _webView.CoreWebView2.Settings.IsGeneralAutofillEnabled = false;
+            _webView.CoreWebView2.Settings.IsPasswordAutosaveEnabled = false;
             _webView.CoreWebView2.NewWindowRequested += (_, args) =>
             {
                 args.Handled = true;
-                if (Uri.TryCreate(args.Uri, UriKind.Absolute, out var target) && IsAllowedExternalLink(target))
+                if (args.IsUserInitiated && Uri.TryCreate(args.Uri, UriKind.Absolute, out var target) && IsAllowedExternalLink(target))
                     TryOpenExternal(target);
             };
             _webView.CoreWebView2.NavigationStarting += (_, args) =>
             {
-                if (!Uri.TryCreate(args.Uri, UriKind.Absolute, out var target) || IsLocalAppAddress(target)) return;
+                if (Uri.TryCreate(args.Uri, UriKind.Absolute, out var target) && IsLocalAppAddress(target)) return;
                 args.Cancel = true;
-                if (IsAllowedExternalLink(target)) TryOpenExternal(target);
             };
+            _webView.CoreWebView2.FrameNavigationStarting += (_, args) =>
+            {
+                if (!Uri.TryCreate(args.Uri, UriKind.Absolute, out var target) || !IsLocalAppAddress(target))
+                    args.Cancel = true;
+            };
+            _webView.CoreWebView2.DownloadStarting += (_, args) => args.Cancel = true;
+            _webView.CoreWebView2.PermissionRequested += (_, args) =>
+                args.State = CoreWebView2PermissionState.Deny;
             _webView.NavigationCompleted += (_, args) =>
             {
-                if (!args.IsSuccess) ShowStartupError($"Falha ao carregar a interface ({args.WebErrorStatus}).");
+                if (!args.IsSuccess)
+                {
+                    ShowStartupError($"Falha ao carregar a interface ({args.WebErrorStatus}).");
+                    return;
+                }
+
+                if (_webView.Source is { } source && IsLocalAppAddress(source))
+                {
+                    var message = JsonSerializer.Serialize(new { type = "session", apiToken = _apiToken });
+                    _webView.CoreWebView2.PostWebMessageAsJson(message);
+                }
             };
 
             Controls.Remove(_loading);
@@ -97,14 +116,6 @@ public sealed class HeatTurboWindow : Form
             "Instalação de drivers em andamento",
             MessageBoxButtons.OK,
             MessageBoxIcon.Warning);
-    }
-
-    [ComVisible(true)]
-    [ClassInterface(ClassInterfaceType.AutoDual)]
-    public sealed class HeatTurboHostBridge
-    {
-        public HeatTurboHostBridge(string apiToken) => ApiToken = apiToken;
-        public string ApiToken { get; }
     }
 
     private void ShowStartupError(string message)

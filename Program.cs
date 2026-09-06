@@ -2,6 +2,7 @@ using HeatTurbo.Desktop;
 using HeatTurbo.Services;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using System.Net;
 using System.Security.Cryptography;
 using System.Windows.Forms;
 
@@ -22,8 +23,24 @@ internal static class Program
         try
         {
             var apiToken = Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
-            var builder = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+            {
+                Args = args,
+                ContentRootPath = AppContext.BaseDirectory,
+                WebRootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot"),
+                EnvironmentName = Environments.Production
+            });
+            builder.WebHost.UseSetting(WebHostDefaults.PreventHostingStartupKey, "true");
             builder.WebHost.UseUrls("http://127.0.0.1:0");
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.AddServerHeader = false;
+                options.Limits.MaxRequestBodySize = 64 * 1024;
+                options.Limits.MaxRequestHeaderCount = 32;
+                options.Limits.MaxRequestHeadersTotalSize = 16 * 1024;
+                options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(10);
+                options.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(30);
+            });
             builder.Services.AddRazorPages();
             builder.Services.AddSingleton<SystemInfoService>();
             builder.Services.AddSingleton<OptimizationService>();
@@ -35,12 +52,28 @@ internal static class Program
 
             using var app = builder.Build();
             if (!app.Environment.IsDevelopment()) app.UseExceptionHandler("/Error");
-            app.UseStaticFiles();
-            app.UseRouting();
             app.Use(async (context, next) =>
             {
+                ApplySecurityHeaders(context.Response.Headers);
+
+                if (!IsTrustedLoopbackRequest(context))
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                    return;
+                }
+
                 if (context.Request.Path.StartsWithSegments("/api"))
                 {
+                    context.Response.Headers.CacheControl = "no-store, max-age=0";
+                    context.Response.Headers.Pragma = "no-cache";
+
+                    if (!HasTrustedBrowserContext(context))
+                    {
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        await context.Response.WriteAsJsonAsync(new { message = "Origem local não autorizada." });
+                        return;
+                    }
+
                     var authorized = context.Request.Headers.TryGetValue("X-HeatTurbo-Token", out var tokenHeader)
                         && tokenHeader.Count == 1
                         && FixedTimeTokenEquals(tokenHeader[0], apiToken);
@@ -53,6 +86,15 @@ internal static class Program
                 }
                 await next();
             });
+            app.UseStaticFiles(new StaticFileOptions
+            {
+                OnPrepareResponse = context =>
+                {
+                    context.Context.Response.Headers.CacheControl = "no-cache";
+                    context.Context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+                }
+            });
+            app.UseRouting();
             app.MapRazorPages();
             MapApi(app);
 
@@ -90,6 +132,56 @@ internal static class Program
         return CryptographicOperations.FixedTimeEquals(
             System.Text.Encoding.ASCII.GetBytes(candidate),
             System.Text.Encoding.ASCII.GetBytes(expected));
+    }
+
+    private static bool IsTrustedLoopbackRequest(HttpContext context)
+    {
+        var remoteAddress = context.Connection.RemoteIpAddress;
+        var localAddress = context.Connection.LocalIpAddress;
+        if (remoteAddress is null || localAddress is null ||
+            !IPAddress.IsLoopback(remoteAddress) || !IPAddress.IsLoopback(localAddress))
+            return false;
+
+        if (!IPAddress.TryParse(context.Request.Host.Host.Trim('[', ']'), out var requestedAddress) ||
+            !IPAddress.IsLoopback(requestedAddress))
+            return false;
+
+        return context.Request.Host.Port is null || context.Request.Host.Port == context.Connection.LocalPort;
+    }
+
+    private static bool HasTrustedBrowserContext(HttpContext context)
+    {
+        if (context.Request.Headers.TryGetValue("Sec-Fetch-Site", out var fetchSite) &&
+            fetchSite.Count == 1 &&
+            !fetchSite[0].Equals("same-origin", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        foreach (var headerName in new[] { "Origin", "Referer" })
+        {
+            if (!context.Request.Headers.TryGetValue(headerName, out var values) || values.Count == 0)
+                continue;
+            if (values.Count != 1 || !Uri.TryCreate(values[0], UriKind.Absolute, out var uri) ||
+                !uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+                !IPAddress.TryParse(uri.Host.Trim('[', ']'), out var address) ||
+                !IPAddress.IsLoopback(address) || uri.Port != context.Connection.LocalPort)
+                return false;
+        }
+        return true;
+    }
+
+    private static void ApplySecurityHeaders(IHeaderDictionary headers)
+    {
+        headers["Content-Security-Policy"] =
+            "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+            "img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; " +
+            "frame-ancestors 'none'; form-action 'none'";
+        headers["X-Content-Type-Options"] = "nosniff";
+        headers["X-Frame-Options"] = "DENY";
+        headers["Referrer-Policy"] = "no-referrer";
+        headers["Permissions-Policy"] =
+            "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=()";
+        headers["Cross-Origin-Opener-Policy"] = "same-origin";
+        headers["Cross-Origin-Resource-Policy"] = "same-origin";
     }
 
     private static void MapApi(WebApplication app)

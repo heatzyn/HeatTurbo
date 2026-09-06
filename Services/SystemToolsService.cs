@@ -23,7 +23,7 @@ public sealed class SystemToolsService : IDisposable
     {
         if (!OperatingSystem.IsWindows()) return new(false, "Disponível somente no Windows.");
         var path = Environment.ProcessPath;
-        if (string.IsNullOrWhiteSpace(path) || !Path.GetFileName(path).Equals("HeatTurbo.exe", StringComparison.OrdinalIgnoreCase))
+        if (!IsTrustedInstalledExecutable(path))
             return new(false, "A inicialização automática só pode ser ativada no HeatTurbo instalado.");
 
         try
@@ -195,7 +195,12 @@ public sealed class SystemToolsService : IDisposable
 
     private static (int ExitCode, string Message) RunSchtasks(params string[] arguments)
     {
-        var start = new ProcessStartInfo("schtasks.exe")
+        var taskSchedulerPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "schtasks.exe");
+        if (!File.Exists(taskSchedulerPath))
+            return (-1, "o executável protegido do Agendador de Tarefas não foi encontrado");
+
+        var start = new ProcessStartInfo(taskSchedulerPath)
         {
             UseShellExecute = false,
             CreateNoWindow = true,
@@ -214,6 +219,30 @@ public sealed class SystemToolsService : IDisposable
         Task.WaitAll(output, error);
         var message = string.Join(" ", new[] { output.Result.Trim(), error.Result.Trim() }.Where(value => value.Length > 0));
         return (process.ExitCode, string.IsNullOrWhiteSpace(message) ? $"código {process.ExitCode}" : message);
+    }
+
+    private static bool IsTrustedInstalledExecutable(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) ||
+            !Path.GetFileName(path).Equals("HeatTurbo.exe", StringComparison.OrdinalIgnoreCase) ||
+            !File.Exists(path))
+            return false;
+        try
+        {
+            var executable = Path.GetFullPath(path);
+            var roots = new[]
+            {
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+            };
+            return roots.Where(root => !string.IsNullOrWhiteSpace(root)).Any(root =>
+                executable.StartsWith(Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar,
+                    StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception error) when (error is ArgumentException or IOException or UnauthorizedAccessException)
+        {
+            return false;
+        }
     }
 
     private static string FormatBytes(long bytes) => bytes >= 1_073_741_824 ? $"{bytes/1_073_741_824d:0.##} GB" : bytes >= 1_048_576 ? $"{bytes/1_048_576d:0.##} MB" : $"{bytes/1024d:0.##} KB";
