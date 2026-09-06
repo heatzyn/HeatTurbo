@@ -1,5 +1,17 @@
 # Histórico de versões
 
+## 0.6.1 — hardening de segurança
+
+- Conteúdo do host local preso à pasta instalada, sem depender do diretório de trabalho ou de variáveis de ambiente de desenvolvimento.
+- API administrativa limitada ao loopback/porta ativa, token aleatório por sessão, validação de origem e limites rígidos de requisição.
+- CSP, bloqueio de framing, política de permissões, `nosniff`, anti-cache da API e remoção do cabeçalho identificador do servidor.
+- Ponte COM genérica removida; token entregue por mensagem nativa somente após navegação local validada.
+- WebView2 bloqueia frames, downloads, permissões e navegações inesperadas; links externos exigem ação real do usuário.
+- Instalação de drivers limitada à seleção exata da última consulta válida e a no máximo 32 pacotes.
+- PowerShell, Agendador de Tarefas e `powercfg` resolvidos exclusivamente pelos executáveis protegidos do Windows.
+- WebView2 atualizado, bibliotecas web antigas e não utilizadas removidas, NuGet Audit e CodeQL adicionados ao CI.
+- GitHub Actions presas a commits imutáveis e permissão de escrita isolada somente no job de release.
+
 ## 0.6.0 — drivers internos e perfil competitivo ampliado
 
 - Aba de drivers inicia e diagnostica Windows Update, BITS e Serviços de Criptografia sem abrir navegador.

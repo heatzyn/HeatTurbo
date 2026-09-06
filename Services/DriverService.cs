@@ -236,6 +236,17 @@ public sealed class DriverService
             .ToArray();
         if (requestedUpdates.Length == 0)
             return new(false, "Nenhum pacote válido foi selecionado. Verifique os drivers novamente.", null);
+        if (requestedUpdates.Length > 32)
+            return new(false, "A seleção excede o limite seguro de 32 pacotes por operação.", null);
+
+        var scan = _cachedScan;
+        if (scan is null || DateTimeOffset.UtcNow - scan.ScannedAt > TimeSpan.FromMinutes(10))
+            return new(false, "A consulta de drivers expirou. Verifique novamente antes de instalar.", null);
+        var allowed = scan.AvailableUpdates
+            .Select(update => $"{update.UpdateId}:{update.RevisionNumber}")
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (requestedUpdates.Any(update => !allowed.Contains($"{update.UpdateId}:{update.RevisionNumber}")))
+            return new(false, "A seleção não corresponde à última consulta validada do Windows Update.", null);
 
         lock (_installStateLock)
         {

@@ -12,7 +12,7 @@
 
 O HeatTurbo é um aplicativo desktop para Windows que identifica o hardware, explica cada ajuste e cria proteção antes de mudar o sistema. O projeto ainda está em fase de testes: use em uma máquina de teste ou revise cada opção antes de aplicar.
 
-Versão atual em desenvolvimento: **0.6.0** · [Ver mudanças](CHANGELOG.md)
+Versão atual em desenvolvimento: **0.6.1** · [Ver mudanças](CHANGELOG.md)
 
 ## Como baixar e instalar
 
