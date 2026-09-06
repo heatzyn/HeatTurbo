@@ -1,30 +1,30 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\gusta\\Documents\\projetoBoost\\HeatTurbo\\HeatTurbo.csproj": {}
+    "/Users/heatz/Public/HeatTurbo/HeatTurbo.csproj": {}
   },
   "projects": {
-    "C:\\Users\\gusta\\Documents\\projetoBoost\\HeatTurbo\\HeatTurbo.csproj": {
+    "/Users/heatz/Public/HeatTurbo/HeatTurbo.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\gusta\\Documents\\projetoBoost\\HeatTurbo\\HeatTurbo.csproj",
+        "projectUniqueName": "/Users/heatz/Public/HeatTurbo/HeatTurbo.csproj",
         "projectName": "HeatTurbo",
-        "projectPath": "C:\\Users\\gusta\\Documents\\projetoBoost\\HeatTurbo\\HeatTurbo.csproj",
-        "packagesPath": "C:\\Users\\gusta\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\gusta\\Documents\\projetoBoost\\HeatTurbo\\obj\\",
+        "projectPath": "/Users/heatz/Public/HeatTurbo/HeatTurbo.csproj",
+        "packagesPath": "/Users/heatz/.nuget/packages/",
+        "outputPath": "/Users/heatz/Public/HeatTurbo/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\gusta\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "/Users/heatz/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
-          "net8.0-windows10.0.19041.0"
+          "net8.0"
         ],
         "sources": {
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net8.0-windows10.0.19041": {
-            "targetAlias": "net8.0-windows10.0.19041.0",
+          "net8.0": {
+            "targetAlias": "net8.0",
             "projectReferences": {}
           }
         },
@@ -40,18 +40,8 @@
         }
       },
       "frameworks": {
-        "net8.0-windows10.0.19041": {
-          "targetAlias": "net8.0-windows10.0.19041.0",
-          "dependencies": {
-            "Microsoft.Web.WebView2": {
-              "target": "Package",
-              "version": "[1.0.4129.50, )"
-            },
-            "NvAPIWrapper.Net": {
-              "target": "Package",
-              "version": "[0.8.1.101, )"
-            }
-          },
+        "net8.0": {
+          "targetAlias": "net8.0",
           "imports": [
             "net461",
             "net462",
@@ -63,59 +53,15 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Runtime.win-arm64",
-              "version": "[8.0.30, 8.0.30]"
-            },
-            {
-              "name": "Microsoft.AspNetCore.App.Runtime.win-x64",
-              "version": "[8.0.30, 8.0.30]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Runtime.win-arm64",
-              "version": "[8.0.30, 8.0.30]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Runtime.win-x64",
-              "version": "[8.0.30, 8.0.30]"
-            },
-            {
-              "name": "Microsoft.Windows.SDK.NET.Ref",
-              "version": "[10.0.19041.56, 10.0.19041.56]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Runtime.win-arm64",
-              "version": "[8.0.30, 8.0.30]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Runtime.win-x64",
-              "version": "[8.0.30, 8.0.30]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
             },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
-            },
-            "Microsoft.Windows.SDK.NET.Ref": {
-              "privateAssets": "all"
-            },
-            "Microsoft.WindowsDesktop.App.WindowsForms": {
-              "privateAssets": "none"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.424/PortableRuntimeIdentifierGraph.json"
-        }
-      },
-      "runtimes": {
-        "win-arm64": {
-          "#import": []
-        },
-        "win-x64": {
-          "#import": []
+          "runtimeIdentifierGraphPath": "/Users/heatz/.dotnet/sdk/8.0.412/PortableRuntimeIdentifierGraph.json"
         }
       }
     }
